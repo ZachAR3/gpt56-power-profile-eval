@@ -1,0 +1,14 @@
+# Archived codebase snapshot (279 MB — too large for git)
+honor-control.tar.gz
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.ruff_cache/
+*.egg-info/
+
+# OS
+.DS_Store
+Thumbs.db
