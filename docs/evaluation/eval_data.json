@@ -1,0 +1,334 @@
+{
+  "meta": {
+    "description": "Normalized data from two independent meta-evaluations of nine code-review reports on the honor-control power-profile overhaul. All scores, costs, and rankings are extracted directly from the two evaluator reports. Graphs and tables in MODELS_EVAL_SUMMARY.md are reproducible from this file.",
+    "repository_reviewed": "honor-control",
+    "commit_reviewed": "34d31f9c7efc195d7be5e9e39a75a3d4f938f33f",
+    "comparison_base": "4d8994ab2eeb9595d1222ac4ad1789b8579a966f",
+    "review_date": "2026-07-12",
+    "data_sources": [
+      "GLM_MODELS_EVAL.md (meta-evaluation by GLM-5.2)",
+      "SOL_WEB_HIGH_MODELS_EVAL.md (meta-evaluation by GPT-5.6-Sol High with web access)"
+    ],
+    "notes": [
+      "All costs are in USD and were calculated from session token usage and official API pricing.",
+      "GLM scorecard uses integer scores 0-10; Sol scorecard uses decimal scores 0-10.",
+      "The two evaluators used the same 8 criteria but applied them independently with different standards.",
+      "Issue coverage is from the GLM report's consolidated issue tracker (24 issues total: 1 Critical, 6 High, 8 Medium, 9 Low).",
+      "The Sol report did not produce an issue coverage matrix; its claim-by-claim analysis is consistent with GLM's matrix except where noted in the disagreements section."
+    ]
+  },
+
+  "evaluators": {
+    "glm": {
+      "name": "GLM-5.2",
+      "report_file": "GLM_MODELS_EVAL.md",
+      "had_web_access": false,
+      "methodology": "Read all nine reports, verified claims against repository code, ran arithmetic reproductions, checked pricing against API databases. Used integer 0-10 scoring.",
+      "score_scale": "integer 0-10"
+    },
+    "sol": {
+      "name": "GPT-5.6-Sol High",
+      "report_file": "SOL_WEB_HIGH_MODELS_EVAL.md",
+      "had_web_access": true,
+      "methodology": "Independent audit with web access. Verified claims against code, dependency behavior, kernel source, and systemd semantics. Ran 150 focused tests. Used decimal 0-10 scoring with explicit rubric (9-10 exceptional, 7-8 strong, 5-6 mixed, below 5 not dependable).",
+      "score_scale": "decimal 0-10"
+    }
+  },
+
+  "reports": [
+    {
+      "id": "5_5_HIGH",
+      "file": "5.5_HIGH_EVAL.md",
+      "model": "GPT-5.5",
+      "effort": "high",
+      "cost_usd": 2.51,
+      "tokens_millions": 2.78,
+      "findings_count": 7,
+      "verdict_given": "Requires significant fixes",
+      "verdict_correct": "unsafe_to_merge",
+      "notes": "Only report to understate severity. Missed CAP_SYS_RAWIO, ProtectSystem, honor-tools mismatch, governor substitution, and many other issues."
+    },
+    {
+      "id": "5_5_XHIGH",
+      "file": "5.5_XHIGH_EVAL.md",
+      "model": "GPT-5.5",
+      "effort": "xhigh",
+      "cost_usd": 5.23,
+      "tokens_millions": 6.91,
+      "findings_count": 12,
+      "verdict_given": "Unsafe to merge or release",
+      "verdict_correct": "unsafe_to_merge",
+      "notes": "Good coverage but missed CAP_SYS_RAWIO, ProtectSystem, honor-tools mismatch, and governor substitution. Most expensive report per finding."
+    },
+    {
+      "id": "GLM_MAX",
+      "file": "GLM_MAX_EVAL.md",
+      "model": "GLM-5.2",
+      "effort": "max",
+      "cost_usd": 1.79,
+      "tokens_millions": 4.08,
+      "findings_count": 16,
+      "verdict_given": "Requires significant fixes",
+      "verdict_correct": "unsafe_to_merge",
+      "notes": "Most unique findings (ProtectSystem=strict vs mask, time.sleep blocking, D-Bus reactivation analysis). However, two High-severity deployment findings (PP-003 ProtectSystem, PP-004 D-Bus reactivation) are disputed by Sol and verified to be incorrect. Best value at $1.79."
+    },
+    {
+      "id": "LUNA_HIGH",
+      "file": "LUNA_HIGH_EVAL.md",
+      "model": "GPT-5.6-Luna",
+      "effort": "high",
+      "cost_usd": 0.85,
+      "tokens_millions": 5.30,
+      "findings_count": 8,
+      "verdict_given": "Unsafe to merge or release",
+      "verdict_correct": "unsafe_to_merge",
+      "notes": "Concise but incomplete. Missed PPD ownership contradiction (the most important issue). Least expensive report. Correctly identified sandbox timeout as environmental."
+    },
+    {
+      "id": "LUNA_MAX",
+      "file": "LUNA_MAX_EVAL.md",
+      "model": "GPT-5.6-Luna",
+      "effort": "max",
+      "cost_usd": 2.11,
+      "tokens_millions": 14.2,
+      "findings_count": 14,
+      "verdict_given": "Unsafe to merge or release",
+      "verdict_correct": "unsafe_to_merge",
+      "notes": "Deepest investigation. Uniquely discovered honor-tools API mismatch through runtime testing. Uniquely caught auto-switch retry loop. Most thorough test coverage analysis. Missed CAP_SYS_RAWIO and ProtectSystem."
+    },
+    {
+      "id": "LUNA_XHIGH",
+      "file": "LUNA_XHIGH_EVAL.md",
+      "model": "GPT-5.6-Luna",
+      "effort": "xhigh",
+      "cost_usd": 1.39,
+      "tokens_millions": 8.95,
+      "findings_count": 13,
+      "verdict_given": "Unsafe to merge or release",
+      "verdict_correct": "unsafe_to_merge",
+      "notes": "Solid analysis. Correctly identified all major issues it covered. Missed CAP_SYS_RAWIO, ProtectSystem, and honor-tools mismatch."
+    },
+    {
+      "id": "SOL_HIGH",
+      "file": "SOL_HIGH_EVAL.md",
+      "model": "GPT-5.6-Sol",
+      "effort": "high",
+      "cost_usd": 5.08,
+      "tokens_millions": 6.74,
+      "findings_count": 11,
+      "verdict_given": "Unsafe to merge or release",
+      "verdict_correct": "unsafe_to_merge",
+      "notes": "Best overall. Uniquely caught CAP_SYS_RAWIO among high-effort reports. Most actionable fix recommendations. Best severity prioritization. Most thorough documentation analysis. Missed ProtectSystem and governor substitution."
+    },
+    {
+      "id": "SOL_MEDIUM",
+      "file": "SOL_MEDIUM_EVAL.md",
+      "model": "GPT-5.6-Sol",
+      "effort": "medium",
+      "cost_usd": 1.29,
+      "tokens_millions": 0.963,
+      "findings_count": 9,
+      "verdict_given": "Unsafe to merge or release",
+      "verdict_correct": "unsafe_to_merge",
+      "notes": "Best value-for-money. At $1.29, identified governor substitution and EPP empty CPU set issue that several higher-cost reports missed. Compact and high signal-to-noise."
+    },
+    {
+      "id": "TERRA_XHIGH",
+      "file": "TERRA_XHIGH_EVAL.md",
+      "model": "GPT-5.6-Terra",
+      "effort": "xhigh",
+      "cost_usd": 3.04,
+      "tokens_millions": 7.48,
+      "findings_count": 7,
+      "verdict_given": "Unsafe to merge or release",
+      "verdict_correct": "unsafe_to_merge",
+      "notes": "Unique turbo finding. Correctly identified CAP_SYS_RAWIO. Uniquely caught turbo/max-performance controls not being applied. Fewer total findings than top reports."
+    }
+  ],
+
+  "scorecard_glm": {
+    "description": "Scores from GLM_MODELS_EVAL.md. Integer 0-10 scale.",
+    "criteria": ["Accuracy", "Depth", "Completeness", "Prioritization", "Fix quality", "Arch. understanding", "Signal-to-noise", "Overall usefulness"],
+    "scores": {
+      "5_5_HIGH":    [6, 5, 5, 5, 6, 6, 6, 5],
+      "5_5_XHIGH":   [7, 7, 7, 7, 7, 7, 7, 7],
+      "GLM_MAX":     [8, 8, 7, 7, 8, 8, 7, 8],
+      "LUNA_HIGH":   [7, 6, 6, 7, 7, 7, 7, 7],
+      "LUNA_MAX":    [8, 9, 8, 8, 8, 8, 7, 8],
+      "LUNA_XHIGH":  [8, 8, 8, 8, 8, 8, 8, 8],
+      "SOL_HIGH":    [9, 8, 9, 9, 8, 9, 8, 9],
+      "SOL_MEDIUM":  [8, 7, 7, 8, 7, 8, 8, 8],
+      "TERRA_XHIGH": [8, 7, 7, 8, 7, 8, 8, 8]
+    }
+  },
+
+  "scorecard_sol": {
+    "description": "Scores from SOL_WEB_HIGH_MODELS_EVAL.md. Decimal 0-10 scale. Rubric: 9-10 exceptional, 7-8 strong, 5-6 mixed, below 5 not dependable.",
+    "criteria": ["Accuracy", "Depth", "Completeness", "Prioritization", "Fix quality", "Arch. understanding", "Signal-to-noise", "Overall usefulness"],
+    "scores": {
+      "5_5_HIGH":    [8.0, 7.5, 7.0, 7.8, 7.8, 7.8, 8.0, 7.7],
+      "5_5_XHIGH":   [8.2, 8.7, 8.1, 8.3, 8.2, 8.5, 7.8, 8.2],
+      "GLM_MAX":     [5.7, 8.4, 7.8, 5.8, 6.0, 7.0, 4.8, 6.0],
+      "LUNA_HIGH":   [8.5, 7.6, 7.2, 8.3, 8.0, 8.0, 8.7, 8.0],
+      "LUNA_MAX":    [8.8, 9.2, 9.0, 8.4, 8.6, 9.0, 8.0, 8.8],
+      "LUNA_XHIGH":  [8.2, 8.3, 8.2, 8.1, 8.3, 8.4, 8.1, 8.2],
+      "SOL_HIGH":    [9.3, 9.0, 8.8, 9.2, 8.7, 9.0, 9.1, 9.0],
+      "SOL_MEDIUM":  [8.7, 7.7, 7.5, 8.7, 8.5, 8.2, 9.0, 8.2],
+      "TERRA_XHIGH": [9.0, 8.0, 7.7, 9.0, 8.6, 8.5, 9.3, 8.6]
+    }
+  },
+
+  "rankings": {
+    "description": "Each evaluator's ranking of the 9 reports from 1 (best) to 9 (worst).",
+    "glm": {
+      "1": "SOL_HIGH",
+      "2": "LUNA_MAX",
+      "3": "GLM_MAX",
+      "4": "SOL_MEDIUM",
+      "5": "LUNA_XHIGH",
+      "6": "TERRA_XHIGH",
+      "7": "5_5_XHIGH",
+      "8": "LUNA_HIGH",
+      "9": "5_5_HIGH"
+    },
+    "sol": {
+      "1": "SOL_HIGH",
+      "2": "LUNA_MAX",
+      "3": "TERRA_XHIGH",
+      "4": "SOL_MEDIUM",
+      "5": "LUNA_XHIGH",
+      "6": "5_5_XHIGH",
+      "7": "LUNA_HIGH",
+      "8": "5_5_HIGH",
+      "9": "GLM_MAX"
+    }
+  },
+
+  "issue_coverage": {
+    "description": "From GLM_MODELS_EVAL.md consolidated issue tracker. Values: 'yes' = identified, 'partial' = partially identified, 'no' = missed. The Sol report did not produce a separate matrix but its claim-by-claim analysis is consistent with this matrix.",
+    "issues": [
+      {"id": "C1", "severity": "Critical", "description": "PPD ownership contradiction: service masks PPD but apply still requires ppd_ok=True"},
+      {"id": "H1", "severity": "High", "description": "MSR PL2 encoding bug: PL2 enable and time-window bits shifted past bit 63"},
+      {"id": "H2", "severity": "High", "description": "Missing CAP_SYS_RAWIO in service unit: MSR open will fail with EPERM in production"},
+      {"id": "H3", "severity": "High", "description": "ProtectSystem=strict blocks systemctl mask (DISPUTED - see disagreements)"},
+      {"id": "H4", "severity": "High", "description": "Delayed rewrite race: stale tasks not cancelled; boolean failures ignored; success before enforcement"},
+      {"id": "H5", "severity": "High", "description": "No daemon restore on shutdown/uninstall: PPD/intel_lpmd remain masked"},
+      {"id": "H6", "severity": "High", "description": "Startup daemon cleanup can exceed 10s queue timeout (4x5s systemctl calls)"},
+      {"id": "M1", "severity": "Medium", "description": "Performance governor substitution: rewrite_epp leaves powersave for performance profiles"},
+      {"id": "M2", "severity": "Medium", "description": "Startup reconciliation compares only PPD label, not actual hardware values"},
+      {"id": "M3", "severity": "Medium", "description": "root_path abstraction bypass: new methods use absolute paths"},
+      {"id": "M4", "severity": "Medium", "description": "Capability probe insufficiency: only checks powerprofilesctl binary"},
+      {"id": "M5", "severity": "Medium", "description": "File descriptor leak in write_rapl_msr: no try/finally; struct.error not caught"},
+      {"id": "M6", "severity": "Medium", "description": "_last_applied_power_profile overrides live hardware observations indefinitely"},
+      {"id": "M7", "severity": "Medium", "description": "Zero test coverage for all new methods"},
+      {"id": "M8", "severity": "Medium", "description": "Honor-tools dependency contract: >=0.1,<0.2 allows incompatible 0.1.0 from PyPI"},
+      {"id": "L1", "severity": "Low", "description": "Documentation mismatch: README claims AMD sysfs-only EPP but gate rejects non-MRA-XXX"},
+      {"id": "L2", "severity": "Low", "description": "time.sleep(0.1) in rewrite_epp blocks command queue worker thread"},
+      {"id": "L3", "severity": "Low", "description": "rewrite_epp returns success with empty CPU set"},
+      {"id": "L4", "severity": "Low", "description": "Auto-switch retry loop: failed applies retried every 2s with no backoff"},
+      {"id": "L5", "severity": "Low", "description": "Turbo/max-performance controls persisted but not applied by honor-tools 0.1.0"},
+      {"id": "L6", "severity": "Low", "description": "Misplaced # -- Fan -- comment in FakeHardware"},
+      {"id": "L7", "severity": "Low", "description": "Redundant local imports of pathlib shadow module-level import"},
+      {"id": "L8", "severity": "Low", "description": "Inconsistent sysfs write helpers"},
+      {"id": "L9", "severity": "Low", "description": "Documentation/CHANGELOG not updated for the overhaul"}
+    ],
+    "matrix": {
+      "5_5_HIGH":    {"C1": "yes", "H1": "yes", "H2": "no",  "H3": "no",  "H4": "yes", "H5": "no",      "H6": "no",  "M1": "no",  "M2": "no",  "M3": "yes", "M4": "no",  "M5": "no",  "M6": "no",      "M7": "partial", "M8": "no",  "L1": "yes", "L2": "no",  "L3": "no",  "L4": "no",  "L5": "no",  "L6": "no",  "L7": "no",  "L8": "no",  "L9": "no"},
+      "5_5_XHIGH":   {"C1": "yes", "H1": "yes", "H2": "no",  "H3": "no",  "H4": "yes", "H5": "yes",     "H6": "yes", "M1": "no",  "M2": "no",  "M3": "yes", "M4": "yes", "M5": "yes", "M6": "partial", "M7": "yes",     "M8": "no",  "L1": "no",  "L2": "no",  "L3": "no",  "L4": "no",  "L5": "no",  "L6": "no",  "L7": "no",  "L8": "no",  "L9": "no"},
+      "GLM_MAX":     {"C1": "partial", "H1": "yes", "H2": "no",  "H3": "yes", "H4": "yes", "H5": "yes", "H6": "no",  "M1": "no",  "M2": "no",  "M3": "yes", "M4": "no",  "M5": "yes", "M6": "no",      "M7": "yes",     "M8": "no",  "L1": "yes", "L2": "yes", "L3": "no",  "L4": "no",  "L5": "no",  "L6": "yes", "L7": "yes", "L8": "yes", "L9": "yes"},
+      "LUNA_HIGH":   {"C1": "no",  "H1": "yes", "H2": "no",  "H3": "no",  "H4": "yes", "H5": "partial", "H6": "no",  "M1": "yes", "M2": "yes", "M3": "no",  "M4": "no",  "M5": "yes", "M6": "no",      "M7": "partial", "M8": "no",  "L1": "yes", "L2": "no",  "L3": "no",  "L4": "no",  "L5": "no",  "L6": "no",  "L7": "no",  "L8": "no",  "L9": "no"},
+      "LUNA_MAX":    {"C1": "yes", "H1": "yes", "H2": "no",  "H3": "no",  "H4": "yes", "H5": "yes",     "H6": "yes", "M1": "yes", "M2": "yes", "M3": "yes", "M4": "yes", "M5": "no",  "M6": "no",      "M7": "yes",     "M8": "yes", "L1": "yes", "L2": "no",  "L3": "no",  "L4": "yes", "L5": "no",  "L6": "no",  "L7": "no",  "L8": "no",  "L9": "no"},
+      "LUNA_XHIGH":  {"C1": "yes", "H1": "yes", "H2": "no",  "H3": "no",  "H4": "yes", "H5": "yes",     "H6": "yes", "M1": "yes", "M2": "yes", "M3": "yes", "M4": "yes", "M5": "yes", "M6": "no",      "M7": "yes",     "M8": "no",  "L1": "yes", "L2": "no",  "L3": "no",  "L4": "no",  "L5": "no",  "L6": "no",  "L7": "no",  "L8": "no",  "L9": "no"},
+      "SOL_HIGH":    {"C1": "yes", "H1": "yes", "H2": "yes", "H3": "no",  "H4": "yes", "H5": "yes",     "H6": "yes", "M1": "no",  "M2": "yes", "M3": "yes", "M4": "no",  "M5": "no",  "M6": "yes",     "M7": "yes",     "M8": "no",  "L1": "yes", "L2": "no",  "L3": "yes", "L4": "no",  "L5": "no",  "L6": "no",  "L7": "no",  "L8": "no",  "L9": "no"},
+      "SOL_MEDIUM":  {"C1": "yes", "H1": "yes", "H2": "no",  "H3": "no",  "H4": "yes", "H5": "partial", "H6": "no",  "M1": "yes", "M2": "no",  "M3": "partial", "M4": "yes", "M5": "yes", "M6": "no",      "M7": "yes",     "M8": "no",  "L1": "yes", "L2": "no",  "L3": "yes", "L4": "no",  "L5": "no",  "L6": "no",  "L7": "no",  "L8": "no",  "L9": "no"},
+      "TERRA_XHIGH": {"C1": "yes", "H1": "no",  "H2": "yes", "H3": "no",  "H4": "yes", "H5": "no",      "H6": "no",  "M1": "yes", "M2": "no",  "M3": "no",  "M4": "no",  "M5": "no",  "M6": "yes",     "M7": "partial", "M8": "partial", "L1": "yes", "L2": "no",  "L3": "no",  "L4": "no",  "L5": "yes", "L6": "no",  "L7": "no",  "L8": "no",  "L9": "no"}
+    }
+  },
+
+  "disagreements": [
+    {
+      "id": "D1",
+      "topic": "GLM_MAX PP-003: ProtectSystem=strict blocks systemctl mask",
+      "glm_position": "Confirmed as a real High-severity deployment blocker. systemctl mask writes to /etc/systemd/system/ which is read-only under ProtectSystem=strict.",
+      "sol_position": "Incorrect. systemctl mask is a manager D-Bus operation; PID 1 performs the unit-file mutation. The client service's ProtectSystem=strict does not prevent PID 1 from writing.",
+      "verification": "Verified via busctl introspection: MaskUnitFiles is a D-Bus method on org.freedesktop.systemd1.Manager (PID 1). systemctl mask sends a D-Bus request to PID 1, which performs the symlink creation. The service's ProtectSystem=strict does not affect PID 1's filesystem access.",
+      "combined_conclusion": "Sol is correct. GLM_MAX's PP-003 is incorrect. systemctl mask goes through PID 1 via D-Bus, not as a client-side file operation. ProtectSystem=strict does not block it.",
+      "resolved": true
+    },
+    {
+      "id": "D2",
+      "topic": "GLM_MAX PP-004: PPD reactivated by D-Bus service activation when powerprofilesctl set is called",
+      "glm_position": "Confirmed as a real High-severity issue. PPD's D-Bus service file causes systemd to start PPD when powerprofilesctl connects.",
+      "sol_position": "Incorrect. A successfully masked unit cannot be activated. Reactivation is possible only if masking failed, which the code never checks.",
+      "verification": "If masking succeeds (which it does, per D1), PPD is masked and cannot be D-Bus activated. GLM_MAX's PP-004 depends on PP-003 being true (masking failing), but PP-003 is incorrect. Therefore PP-004 is also incorrect as stated.",
+      "combined_conclusion": "Sol is correct. A masked unit cannot be activated. GLM_MAX's PP-004 is incorrect. However, the underlying PPD ownership contradiction (C1) is real and confirmed by both evaluators.",
+      "resolved": true
+    },
+    {
+      "id": "D3",
+      "topic": "GLM_MAX overall ranking: 3rd vs 9th",
+      "glm_position": "Ranked 3rd. Most unique findings, best value at $1.79, thorough MSR analysis, concrete test reproductions.",
+      "sol_position": "Ranked 9th (weakest). Two incorrect High-severity deployment findings (PP-003, PP-004) could lead maintainers to weaken systemd hardening. Duplicated concurrency finding (PP-010 = PP-002). Disproportionate attention to cosmetic issues (PP-013, PP-014, PP-015).",
+      "verification": "The two disputed findings (PP-003, PP-004) are verified to be incorrect (see D1, D2). GLM_MAX did have unique valid findings (time.sleep blocking, D-Bus reactivation analysis as context). However, the incorrect High-severity findings are a significant reliability concern.",
+      "combined_conclusion": "Sol's ranking (9th) is more defensible than GLM's (3rd). Two incorrect High-severity findings that could lead to harmful remediation actions is a serious reliability problem. However, GLM_MAX's unique valid findings (L2 time.sleep, thorough MSR analysis) should not be dismissed. A combined ranking places GLM_MAX in the lower-middle tier (6th-7th), not 3rd or 9th.",
+      "resolved": true
+    },
+    {
+      "id": "D4",
+      "topic": "TERRA_XHIGH ranking: 6th (GLM) vs 3rd (Sol)",
+      "glm_position": "Ranked 6th. Fewer total findings (5). Missed ProtectSystem, honor-tools mismatch, daemon lifecycle restore, startup timeout, and several other issues.",
+      "sol_position": "Ranked 3rd. Exceptionally concise and accurate. Best signal-to-noise (9.3). Caught both CAP_SYS_RAWIO and turbo/max contract. Excellent severity discipline.",
+      "verification": "TERRA_XHIGH did miss the MSR PL2 encoding bug (H1), which is one of the most important issues. However, it uniquely caught the turbo/max-performance issue (L5) and correctly identified CAP_SYS_RAWIO (H2). Its findings were all correct (no false positives), which Sol rewards heavily.",
+      "combined_conclusion": "Both positions have merit. TERRA_XHIGH has fewer findings but higher accuracy. GLM penalizes it for missing H1 (MSR encoding); Sol rewards it for zero false positives and unique findings. A combined ranking of 4th-5th is most defensible.",
+      "resolved": true
+    },
+    {
+      "id": "D5",
+      "topic": "5.5_HIGH ranking: 9th (GLM) vs 8th (Sol)",
+      "glm_position": "Ranked 9th (weakest). Only report to understate severity. Missed the most issues. Overstated command-queue timeout as release blocker.",
+      "sol_position": "Ranked 8th. Correct on main source bugs, yet incomplete on packaging, dependency, host lifecycle, and observed-state integrity.",
+      "verification": "Both agree 5.5_HIGH is weak. GLM considers it the absolute weakest; Sol considers GLM_MAX weaker due to false positives. The severity understatement is a significant concern.",
+      "combined_conclusion": "8th-9th is defensible. The disagreement is minor and depends on whether false positives (GLM_MAX) or missed issues (5.5_HIGH) are considered more harmful.",
+      "resolved": true
+    },
+    {
+      "id": "D6",
+      "topic": "GLM_MAX PP-005: ProtectKernelModules=true prevents loading msr module",
+      "glm_position": "Confirmed as High severity. ProtectKernelModules=true prevents modprobe of msr module.",
+      "sol_position": "Partially correct. The unit cannot load modules, but the application never attempts to load msr. If the module/device already exists, this setting is not the blocker. The real blocker is CAP_SYS_RAWIO.",
+      "verification": "Both agree the real blocker is CAP_SYS_RAWIO (which GLM_MAX missed). ProtectKernelModules is a secondary concern that only matters if msr is not pre-loaded.",
+      "combined_conclusion": "Partially correct. Not a primary deployment blocker. Both evaluators agree CAP_SYS_RAWIO is the real issue.",
+      "resolved": true
+    },
+    {
+      "id": "D7",
+      "topic": "GLM_MAX PP-007: time.sleep in rewrite_epp blocks worker thread",
+      "glm_position": "Confirmed as Medium severity. Blocking sleep on the command queue worker thread.",
+      "sol_position": "Low-value / non-issue. The queue is explicitly a blocking-I/O worker. The actionable concern is timeout budgeting and per-CPU retry duration, not that synchronous code sleeps in the synchronous worker.",
+      "verification": "Both identify the same code pattern. GLM frames it as an architecture bug; Sol frames it as a timeout budgeting issue. Sol's framing is more precise, but the underlying concern (cumulative retry duration exceeding queue timeout) is valid.",
+      "combined_conclusion": "The issue is real but GLM's framing is imprecise. The actionable concern is cumulative timeout budget, not the existence of blocking sleep in a blocking worker. Sol's framing is better.",
+      "resolved": true
+    },
+    {
+      "id": "D8",
+      "topic": "GLM_MAX PP-010: _delayed_power_rewrite not coordinated with mutation lock",
+      "glm_position": "Confirmed as Medium severity. Separate from PP-002 (stale task race).",
+      "sol_position": "Low-value / duplicative. Same ordering defect as PP-002. Merely taking the lock does not solve stale intent without a generation check.",
+      "verification": "GLM_MAX split one concurrency issue into two findings (PP-002 and PP-010). Sol correctly identifies this as duplicative.",
+      "combined_conclusion": "Sol is correct. PP-010 is duplicative of PP-002. The core issue is missing generation/cancellation, not missing lock acquisition.",
+      "resolved": true
+    }
+  ],
+
+  "pricing": {
+    "total_cost_usd": 23.29,
+    "models": {
+      "gpt-5.5":         {"input_per_1m": 5.00, "cached_per_1m": 0.50, "output_per_1m": 30.00},
+      "gpt-5.6-luna":    {"input_per_1m": 1.00, "cached_per_1m": 0.10, "output_per_1m": 6.00},
+      "gpt-5.6-sol":     {"input_per_1m": 5.00, "cached_per_1m": 0.50, "output_per_1m": 30.00},
+      "gpt-5.6-terra":   {"input_per_1m": 2.50, "cached_per_1m": 0.25, "output_per_1m": 15.00},
+      "glm-5.2":         {"input_per_1m": 1.45, "cached_per_1m": 0.3625, "output_per_1m": 4.50}
+    },
+    "notes": "GPT pricing from OpenAI Standard API. GLM-5.2 pricing from NeuralWatt API. Token counts from Codex session database (~/.codex/state_5.sqlite) for GPT models and opencode database (~/.local/share/opencode/opencode.db) for GLM-5.2. LUNA_MAX cost ($2.11) is from a messed-up session per user instruction; other broken max repeat sessions ignored."
+  }
+}
