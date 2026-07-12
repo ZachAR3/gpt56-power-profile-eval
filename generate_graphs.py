@@ -42,15 +42,15 @@ plt.rcParams.update(
     }
 )
 
-# Consistent colours for the 9 reports
+# Consistent colours for the 9 reports — ordered by combined ranking
 REPORT_ORDER = [
-    "SOL_HIGH",
     "LUNA_MAX",
-    "TERRA_XHIGH",
-    "SOL_MEDIUM",
+    "SOL_HIGH",
     "LUNA_XHIGH",
     "5_5_XHIGH",
+    "SOL_MEDIUM",
     "LUNA_HIGH",
+    "TERRA_XHIGH",
     "5_5_HIGH",
     "GLM_MAX",
 ]
@@ -591,6 +591,61 @@ def graph_effort_analysis(data):
     save(fig, "09_effort_analysis.svg")
 
 
+# ---------------------------------------------------------------------------
+# 10. Severity-weighted coverage (from revised Sol methodology)
+# ---------------------------------------------------------------------------
+def graph_severity_weighted_coverage(data):
+    swc = data.get("severity_weighted_coverage", {})
+    if not swc:
+        return
+    reports = REPORT_ORDER
+    sev_cov = [swc["coverage"][r]["severity_weighted_pct"] for r in reports]
+    ch_cov = [swc["coverage"][r]["critical_high_pct"] for r in reports]
+
+    x = np.arange(len(reports))
+    w = 0.38
+    fig, ax = plt.subplots(figsize=(12, 6))
+    b1 = ax.bar(
+        x - w / 2,
+        sev_cov,
+        w,
+        label="Severity-weighted coverage (%)",
+        color="#2563eb",
+        edgecolor=EDGE,
+        alpha=0.85,
+    )
+    b2 = ax.bar(
+        x + w / 2,
+        ch_cov,
+        w,
+        label="Critical/High coverage (%)",
+        color="#ea580c",
+        edgecolor=EDGE,
+        alpha=0.85,
+    )
+
+    for bars in (b1, b2):
+        for b in bars:
+            ax.text(
+                b.get_x() + b.get_width() / 2,
+                b.get_height() + 0.8,
+                f"{b.get_height():.1f}%",
+                ha="center",
+                va="bottom",
+                fontsize=8,
+            )
+
+    ax.set_xticks(x)
+    ax.set_xticklabels(
+        [REPORT_LABELS[r] for r in reports], fontsize=9, rotation=20, ha="right"
+    )
+    ax.set_ylabel("Coverage (%)")
+    ax.set_title("Severity-Weighted Finding Coverage (Sol revised methodology)")
+    ax.set_ylim(0, 100)
+    ax.legend(frameon=False, loc="upper right")
+    save(fig, "10_severity_weighted_coverage.svg")
+
+
 if __name__ == "__main__":
     print("Generating graphs from docs/evaluation/eval_data.json...")
     data = load_data()
@@ -603,4 +658,5 @@ if __name__ == "__main__":
     graph_cost_efficiency(data)
     graph_severity_distribution(data)
     graph_effort_analysis(data)
+    graph_severity_weighted_coverage(data)
     print("Done. SVG files written to docs/assets/")

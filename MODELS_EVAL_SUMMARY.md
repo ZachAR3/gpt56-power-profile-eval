@@ -16,34 +16,42 @@ nine reports for accuracy, completeness, and reliability.
 
 ### Key findings
 
-- **Both evaluators agree** on the top two reports: **SOL High** (GPT-5.6-Sol, high effort) is
-  the strongest, followed by **LUNA Max** (GPT-5.6-Luna, max effort).
+- **The evaluators disagree on the #1 report.** GLM ranks **SOL High** first; Sol's revised
+  methodology ranks **LUNA Max** first. The disagreement stems from Sol's revised scoring, which
+  weights severity-weighted finding coverage at 60% of the overall score — rewarding LUNA Max for
+  being the only report to discover the Critical `honor-tools` dependency API incompatibility.
 - **Both evaluators agree** that the overhaul is **unsafe to merge or release**. All nine reports
   reached this conclusion (with one exception: 5.5 High understated it as "requires significant
   fixes").
-- **The primary disagreement** is about **GLM Max**: GLM-5.2 ranked it 3rd (best value, most
+- **The primary disagreement** about **GLM Max** persists: GLM-5.2 ranked it 3rd (best value, most
   unique findings), while GPT-5.6-Sol High ranked it 9th (weakest, due to two incorrect
-  High-severity deployment findings). **Independent verification confirms Sol is correct**:
-  `systemctl mask` is a D-Bus operation handled by PID 1, not a client-side file operation, so
-  `ProtectSystem=strict` does not block it. GLM Max's PP-003 and PP-004 are incorrect.
-- **Best value:** SOL Medium ($1.29) identified key issues that several higher-cost reports
-  missed. LUNA High ($0.85) was cheapest but missed the most important issue.
-- **Most expensive per finding:** 5.5 XHigh ($5.23) cost $0.52 per finding and missed key
-  deployment blockers.
+  High-severity deployment findings and low validated finding density). **Independent verification
+  confirms Sol is correct**: `systemctl mask` is a D-Bus operation handled by PID 1, not a
+  client-side file operation, so `ProtectSystem=strict` does not block it. GLM Max's PP-003 and
+  PP-004 are incorrect.
+- **TERRA XHigh was significantly downgraded** in Sol's revised ranking (from 3rd to 7th) because
+  it completely misses the Critical PL2 encoding defect — a major completeness failure that should
+  not be offset by conciseness.
+- **Best value:** SOL Medium ($1.29) identified key issues that several higher-cost reports missed.
+  LUNA High ($0.85) was cheapest but missed the most important issue.
 
 ### Combined ranking
 
-| Rank | Report | Model | Effort | Cost | Key strength |
-|------|--------|-------|--------|------|---------------|
-| 1 | SOL High | GPT-5.6-Sol | high | $5.08 | Best overall accuracy and deployment awareness |
-| 2 | LUNA Max | GPT-5.6-Luna | max | $2.11 | Deepest investigation, unique dependency discovery |
-| 3 | TERRA XHigh | GPT-5.6-Terra | xhigh | $3.04 | Zero false positives, unique turbo finding |
-| 4 | SOL Medium | GPT-5.6-Sol | medium | $1.29 | Best value, high signal-to-noise |
-| 5 | LUNA XHigh | GPT-5.6-Luna | xhigh | $1.39 | Solid, broad coverage |
-| 6 | 5.5 XHigh | GPT-5.5 | xhigh | $5.23 | Good coverage, missed deployment blockers |
-| 7 | GLM Max | GLM-5.2 | max | $1.79 | Unique findings, but two incorrect High-severity claims |
-| 8 | LUNA High | GPT-5.6-Luna | high | $0.85 | Concise, missed PPD ownership contradiction |
-| 9 | 5.5 High | GPT-5.5 | high | $2.51 | Understated severity, missed most issues |
+| Rank | Report | Model | Effort | Cost | GLM rank | Sol rank | Key strength |
+|------|--------|-------|--------|------|----------|----------|--------------|
+| 1 | **LUNA Max** | GPT-5.6-Luna | max | $2.11 | 2 | 1 | Highest severity-weighted coverage; only report to find the Critical dependency API break |
+| 2 | **SOL High** | GPT-5.6-Sol | high | $5.08 | 1 | 2 | Most accurate report; caught CAP_SYS_RAWIO and sticky applied-state overlay |
+| 3 | **LUNA XHigh** | GPT-5.6-Luna | xhigh | $1.39 | 5 | 3 | Broad, mostly validated coverage across eleven issue areas |
+| 4 | **5.5 XHigh** | GPT-5.5 | xhigh | $5.23 | 7 | 4 | Excellent core blocker coverage; ten confirmed findings |
+| 5 | **SOL Medium** | GPT-5.6-Sol | medium | $1.29 | 4 | 5 | Disciplined, practical, strong validated density; best value |
+| 6 | **LUNA High** | GPT-5.6-Luna | high | $0.85 | 8 | 6 | Useful and technically sound, but misses two key blockers |
+| 7 | **TERRA XHigh** | GPT-5.6-Terra | xhigh | $3.04 | 6 | 7 | Valuable CAP_SYS_RAWIO finding, but misses Critical PL2 bug |
+| 8 | **5.5 High** | GPT-5.5 | high | $2.51 | 9 | 8 | Correct on main source bugs but narrow and understates severity |
+| 9 | **GLM Max** | GLM-5.2 | max | $1.79 | 3 | 9 | High apparent volume but low validated density; two incorrect High-severity claims |
+
+> **Note on the combined ranking:** Where the two evaluators disagree, this synthesis prioritizes
+> verified correctness and severity-weighted coverage over evaluator opinion. See Section 9 for
+> detailed disagreement analysis.
 
 ---
 
@@ -150,19 +158,23 @@ installed `honor-tools` dependency. No model had access to real Honor hardware.
 - Used integer 0-10 scoring on 8 criteria
 - Produced a consolidated issue tracker with 24 issues
 
-**GPT-5.6-Sol High** (with web access):
+**GPT-5.6-Sol High** (with web access, **revised methodology**):
 - Independently inspected git history, full change range, all callers and state paths
 - Ran a safe adapter probe confirming the `honor-tools` API mismatch
 - Ran 150 focused backend/application/hardware/config/model tests
 - Verified Linux x86 `msr_open()` capability requirements via kernel source
 - Verified systemd `systemctl mask` implementation (D-Bus manager operation)
-- Used decimal 0-10 scoring with an explicit rubric (9-10 exceptional, 7-8 strong, 5-6 mixed,
-  below 5 not dependable)
+- **Revised scoring methodology**: 60% of overall score from severity-weighted finding coverage
+  against a canonical 18-issue set (3 Critical, 7 High, 6 Medium, 2 Low), with factual accuracy
+  and false-positive control as substantial counterweight (20%), fix quality (8%), architectural
+  understanding (7%), and signal/clarity (5%)
+- The revision corrected the original scorecard's over-weighting of prose quality, compactness,
+  and false-positive avoidance
 
 ### How this summary was produced
 
 This report was created by:
-1. Reading both meta-evaluation reports completely
+1. Reading both meta-evaluation reports completely (including the Sol revision)
 2. Reading key individual reports (GLM Max, SOL High, LUNA Max, TERRA XHigh) to verify
    meta-evaluators' claims
 3. **Independently verifying the central technical disagreement** (whether `ProtectSystem=strict`
@@ -175,20 +187,31 @@ This report was created by:
 
 ## 5. Data-Quality and Comparability Limitations
 
-### Scoring scale differences
+### Scoring scale and methodology differences
 
-GLM used **integer scores** (0-10); Sol used **decimal scores** (0-10) with an explicit rubric.
-Direct numerical comparison between the two scorecards is approximate. The Sol scorecard tends to
-use the full range (4.8-9.3), while the GLM scorecard compresses scores into a narrower band
-(5-9). This does not affect rankings but makes raw score differences misleading.
+GLM used **integer scores** (0-10) with equal-weight criteria. Sol used **decimal scores** (0-10)
+with a revised methodology that weights severity-weighted finding coverage at 60% of the overall
+score. Direct numerical comparison between the two scorecards is approximate. The Sol scorecard
+tends to use the full range (4.0-8.4), while the GLM scorecard compresses scores into a narrower
+band (5-9). This does not affect rankings but makes raw score differences misleading.
 
 ### Different scoring philosophies
 
 - **GLM** rewards unique findings and depth of investigation. It ranked GLM Max 3rd despite
   disputed findings because of its unique discoveries.
-- **Sol** penalizes false positives heavily, especially when they could lead to harmful
-  remediation. It ranked GLM Max 9th because two incorrect High-severity findings could cause
-  maintainers to weaken systemd hardening.
+- **Sol (revised)** weights severity-weighted finding coverage most heavily. It ranks LUNA Max 1st
+  because LUNA Max was the only report to find the Critical dependency API incompatibility, and
+  penalizes GLM Max heavily for two incorrect High-severity findings and low validated finding
+  density (only 5 of 16 findings fully confirmed).
+
+### Sol report revision
+
+The Sol report was revised after initial publication. The revision:
+- Introduced a severity-weighted coverage methodology (60% of overall score from finding coverage)
+- Created a canonical issue set of 18 issues (3 Critical, 7 High, 6 Medium, 2 Low)
+- Changed the ranking: LUNA Max moved from 2nd to 1st; SOL High moved from 1st to 2nd; TERRA XHigh
+  dropped from 3rd to 7th
+- Lowered overall scores across the board, reflecting the new methodology's stricter standards
 
 ### No real hardware
 
@@ -205,11 +228,10 @@ defect. The full 221-test suite passes outside the sandbox.
 
 ### Issue coverage matrix caveats
 
-The issue coverage matrix is from the GLM report. The Sol report did not produce a separate
-matrix but its claim-by-claim analysis is consistent. There is a minor internal inconsistency in
-the GLM report: the "Issue Count by Report" table lists TERRA XHigh as having 5 issues, but the
-coverage matrix shows 7 "yes" entries and 2 "partial" entries. This summary uses the matrix
-values directly.
+The issue coverage matrix is from the GLM report (24 issues). The Sol report uses a different
+canonical issue set (18 issues) for its severity-weighted coverage scoring. The two issue sets
+overlap substantially but are not identical. The Sol report's claim-by-claim analysis is consistent
+with GLM's matrix except where noted in the disagreements section.
 
 ### Pricing assumptions
 
@@ -225,17 +247,17 @@ the sum of individual report costs is $23.29 (a minor rounding discrepancy).
 
 ![Overall Scores](docs/assets/01_overall_scores.svg)
 
-| Report | GLM score | Sol score | Average |
-|--------|-----------|-----------|---------|
-| SOL High | 9.0 | 9.0 | **9.0** |
-| LUNA Max | 8.0 | 8.8 | **8.4** |
-| TERRA XHigh | 8.0 | 8.6 | **8.3** |
-| SOL Medium | 8.0 | 8.2 | **8.1** |
-| LUNA XHigh | 8.0 | 8.2 | **8.1** |
-| 5.5 XHigh | 7.0 | 8.2 | **7.6** |
-| LUNA High | 7.0 | 8.0 | **7.5** |
-| GLM Max | 8.0 | 6.0 | **7.0** |
-| 5.5 High | 5.0 | 7.7 | **6.4** |
+| Report | GLM score | Sol score (revised) | Average |
+|--------|-----------|---------------------|---------|
+| LUNA Max | 8.0 | 8.4 | **8.2** |
+| SOL High | 9.0 | 8.1 | **8.6** |
+| LUNA XHigh | 8.0 | 7.1 | **7.6** |
+| 5.5 XHigh | 7.0 | 7.0 | **7.0** |
+| SOL Medium | 8.0 | 6.8 | **7.4** |
+| LUNA High | 7.0 | 6.4 | **6.7** |
+| TERRA XHigh | 8.0 | 6.0 | **7.0** |
+| 5.5 High | 5.0 | 5.5 | **5.3** |
+| GLM Max | 8.0 | 4.0 | **6.0** |
 
 ### Full scorecard heatmap
 
@@ -246,8 +268,24 @@ the sum of individual report costs is $23.29 (a minor rounding discrepancy).
 ![Evaluator Comparison](docs/assets/03_evaluator_comparison.svg)
 
 Points above the diagonal were scored higher by Sol; points below were scored higher by GLM.
-The largest outlier is **GLM Max** (GLM: 8.0, Sol: 6.0), driven by the disputed deployment
-findings (see Section 9).
+The largest outlier is **GLM Max** (GLM: 8.0, Sol: 4.0), driven by the disputed deployment
+findings and the revised methodology's penalty for low validated finding density (see Section 9).
+
+### Severity-weighted finding coverage (Sol revised methodology)
+
+![Severity-Weighted Coverage](docs/assets/10_severity_weighted_coverage.svg)
+
+| Report | Confirmed | Partial | Incorrect | Low-value/dup | Sev-weighted % | Crit/High % |
+|--------|-----------|---------|-----------|----------------|----------------|-------------|
+| LUNA Max | 11 | 3 | 0 | 0 | **81.3%** | **83.3%** |
+| SOL High | 11 | 0 | 0 | 0 | **72.0%** | **73.6%** |
+| LUNA XHigh | 10 | 2 | 0 | 0 | **62.2%** | **61.1%** |
+| 5.5 XHigh | 10 | 1 | 0 | 0 | **59.5%** | **63.2%** |
+| SOL Medium | 7 | 2 | 0 | 0 | **55.7%** | **52.8%** |
+| LUNA High | 6 | 2 | 0 | 0 | **49.7%** | **49.3%** |
+| TERRA XHigh | 4 | 3 | 0 | 0 | **44.8%** | **41.0%** |
+| 5.5 High | 5 | 1 | 0 | 0 | **38.6%** | **40.3%** |
+| GLM Max | 5 | 4 | 2 | 5 | **32.1%** | **30.6%** |
 
 ---
 
@@ -255,8 +293,8 @@ findings (see Section 9).
 
 ### Issue coverage matrix
 
-The 24 consolidated issues (1 Critical, 6 High, 8 Medium, 9 Low) were identified across all nine
-reports. The matrix below shows which reports caught which issues.
+The 24 consolidated issues (1 Critical, 6 High, 8 Medium, 9 Low) from the GLM report were
+identified across all nine reports. The matrix below shows which reports caught which issues.
 
 ![Issue Coverage](docs/assets/06_issue_coverage.svg)
 
@@ -270,8 +308,9 @@ reports. The matrix below shows which reports caught which issues.
 This is the single most important issue — the service masks PPD at startup but the apply path
 still requires `ppd_ok=True`, which depends on PPD being running.
 
-**H1 (MSR PL2 encoding bug):** Identified by 8 of 9 reports. TERRA XHigh missed it. This bug
-silently writes PL2 disabled and loses the time window, defeating the overhaul's main purpose.
+**H1 (MSR PL2 encoding bug):** Identified by 8 of 9 reports. TERRA XHigh missed it — a Critical
+miss in Sol's revised assessment that dropped it from 3rd to 7th. This bug silently writes PL2
+disabled and loses the time window, defeating the overhaul's main purpose.
 
 **H2 (Missing CAP_SYS_RAWIO):** Identified by only 2 of 9 reports (SOL High, TERRA XHigh).
 This is the most important deployment blocker — the shipped service unit lacks the capability
@@ -286,14 +325,16 @@ universally recognized issue.
 
 **M8 (Honor-tools dependency mismatch):** Identified by only LUNA Max (and partially by TERRA
 XHigh). The adapter passes `turbo_enabled` and `max_perf_pct` to a constructor that doesn't
-accept them, causing every profile apply to fail before reaching hardware.
+accept them, causing every profile apply to fail before reaching hardware. Sol's revised
+methodology classifies this as Critical, making LUNA Max the only report to find a Critical issue
+beyond the PPD ownership contradiction.
 
 ### Unique findings per report
 
 | Report | Unique findings |
 |--------|----------------|
 | GLM Max | `time.sleep` blocking (L2), `ProtectSystem` vs mask (H3 — **incorrect**), D-Bus reactivation analysis (PP-004 — **incorrect**), misplaced comment (L6), redundant imports (L7), inconsistent sysfs helpers (L8), docs/CHANGELOG not updated (L9) |
-| LUNA Max | Honor-tools dependency mismatch (M8), auto-switch retry loop (L4) |
+| LUNA Max | Honor-tools dependency mismatch (M8/Critical in Sol's canonical set), auto-switch retry loop (L4) |
 | SOL High | `CAP_SYS_RAWIO` (H2, shared with TERRA), empty CPU set returns success (L3), `_last_applied` override (M6) |
 | TERRA XHigh | Turbo/max-performance not applied (L5), `CAP_SYS_RAWIO` (H2, shared with SOL) |
 
@@ -311,23 +352,23 @@ accept them, causing every profile apply to fail before reaching hardware.
 
 | Report | Cost | Findings | Cost/finding | Avg score | Cost/score point |
 |--------|------|----------|-------------|-----------|-----------------|
-| SOL Medium | $1.29 | 9 | $0.14 | 8.1 | $0.16 |
-| LUNA High | $0.85 | 8 | $0.11 | 7.5 | $0.11 |
-| GLM Max | $1.79 | 16 | $0.11 | 7.0 | $0.26 |
-| LUNA XHigh | $1.39 | 13 | $0.11 | 8.1 | $0.17 |
-| TERRA XHigh | $3.04 | 7 | $0.43 | 8.3 | $0.37 |
-| LUNA Max | $2.11 | 14 | $0.15 | 8.4 | $0.25 |
-| 5.5 High | $2.51 | 7 | $0.36 | 6.4 | $0.39 |
-| SOL High | $5.08 | 11 | $0.46 | 9.0 | $0.56 |
-| 5.5 XHigh | $5.23 | 12 | $0.44 | 7.6 | $0.69 |
+| SOL Medium | $1.29 | 9 | $0.14 | 7.4 | $0.17 |
+| LUNA High | $0.85 | 8 | $0.11 | 6.7 | $0.13 |
+| GLM Max | $1.79 | 16 | $0.11 | 6.0 | $0.30 |
+| LUNA XHigh | $1.39 | 13 | $0.11 | 7.6 | $0.18 |
+| TERRA XHigh | $3.04 | 7 | $0.43 | 7.0 | $0.43 |
+| LUNA Max | $2.11 | 14 | $0.15 | 8.2 | $0.26 |
+| 5.5 High | $2.51 | 7 | $0.36 | 5.3 | $0.47 |
+| SOL High | $5.08 | 11 | $0.46 | 8.6 | $0.59 |
+| 5.5 XHigh | $5.23 | 12 | $0.44 | 7.0 | $0.75 |
 
 ### Key observations
 
 - **Best cost per finding:** LUNA High ($0.11), GLM Max ($0.11), and LUNA XHigh ($0.11) are
   tied. However, LUNA High missed the most important issue, and GLM Max had incorrect findings.
-- **Best cost per score point:** LUNA High ($0.11) and SOL Medium ($0.16) lead. SOL Medium is
+- **Best cost per score point:** LUNA High ($0.13) and SOL Medium ($0.17) lead. SOL Medium is
   the better choice because it identified more critical issues.
-- **Most expensive per score point:** 5.5 XHigh ($0.69) — it cost $5.23 but missed key
+- **Most expensive per score point:** 5.5 XHigh ($0.75) — it cost $5.23 but missed key
   deployment blockers.
 - **Best overall value:** SOL Medium ($1.29) offers the best balance of cost, accuracy, and
   issue coverage. It identified the governor substitution and EPP empty CPU set issue that
@@ -344,11 +385,11 @@ accept them, causing every profile apply to fail before reaching hardware.
 ### Where the evaluators agree
 
 Both evaluators agree on:
-- **Top 2:** SOL High (1st), LUNA Max (2nd)
-- **Middle tier:** SOL Medium (4th), LUNA XHigh (5th)
-- **Bottom tier:** LUNA High (7th-8th), 5.5 High (8th-9th)
+- **Top tier:** Both place LUNA Max and SOL High in the top 2 (though they disagree on order)
+- **GLM Max is weak:** Both place it in the bottom tier (GLM: 3rd is an outlier; Sol: 9th)
+- **5.5 High is weak:** Both place it in the bottom 2 (GLM: 9th, Sol: 8th)
 - **Overall verdict:** The overhaul is unsafe to merge or release
-- **All 24 consolidated issues** are real and remain unfixed
+- **All consolidated issues** are real and remain unfixed
 
 ### Where the evaluators disagree
 
@@ -381,60 +422,78 @@ succeeds (per D1), PPD is masked and cannot be D-Bus activated. A masked unit ha
 **Resolved conclusion:** **Sol is correct.** GLM Max's PP-004 is incorrect as stated. However,
 the underlying PPD ownership contradiction (C1) is real and confirmed by both evaluators.
 
-#### D3: GLM Max overall ranking — 3rd (GLM) vs 9th (Sol)
+#### D3: GLM Max overall ranking — 3rd (GLM) vs 9th (Sol revised)
 
 | | GLM position | Sol position |
 |---|---|---|
 | **Rank** | 3rd | 9th (weakest) |
-| **Reasoning** | Most unique findings, best value at $1.79, thorough MSR analysis | Two incorrect High-severity findings could lead maintainers to weaken systemd hardening; duplicated concurrency finding; cosmetic noise |
+| **Reasoning** | Most unique findings, best value at $1.79, thorough MSR analysis | High apparent finding count but low validated density: only 5 of 16 findings fully confirmed, 2 materially incorrect, 5 low-value or duplicative. Incorrect ProtectSystem and masked-unit reactivation claims could cause maintainers to weaken hardening. |
 
 **Verification:** The two disputed findings (PP-003, PP-004) are verified to be incorrect (D1,
 D2). GLM Max did have unique valid findings (L2 `time.sleep` blocking, thorough MSR analysis, D-Bus
 reactivation as context). However, two incorrect High-severity findings that could lead to
 harmful remediation is a serious reliability concern.
 
-**Resolved conclusion:** Sol's ranking (9th) is more defensible than GLM's (3rd). However, GLM
-Max's unique valid findings should not be dismissed entirely. A combined ranking of **7th** is
-most defensible — lower than either evaluator's pure average (6th) because the incorrect findings
-could cause real harm.
+**Resolved conclusion:** Sol's ranking (9th) is more defensible than GLM's (3rd). The revised
+methodology's severity-weighted coverage analysis confirms GLM Max has only 32.1% coverage (lowest
+of all reports) and 2 incorrect findings. A combined ranking of **9th** is most defensible.
 
-#### D4: TERRA XHigh ranking — 6th (GLM) vs 3rd (Sol)
+#### D4: TERRA XHigh ranking — 6th (GLM) vs 7th (Sol revised, was 3rd)
 
-| | GLM position | Sol position |
+| | GLM position | Sol position (revised) |
 |---|---|---|
-| **Rank** | 6th | 3rd |
-| **Reasoning** | Fewer total findings (5), missed several issues | Exceptionally concise and accurate, best signal-to-noise (9.3), zero false positives |
+| **Rank** | 6th | 7th (downgraded from 3rd) |
+| **Reasoning** | Fewer total findings (5), missed several issues | Remains concise and accurate, but has only 4 fully confirmed findings plus 3 partial findings and completely misses the Critical PL2 encoding defect. High signal-to-noise should not compensate for that level of missed severity. |
 
-**Verification:** TERRA XHigh did miss the MSR PL2 encoding bug (H1), which is significant.
-However, it uniquely caught the turbo/max-performance issue (L5) and correctly identified
-`CAP_SYS_RAWIO` (H2). All its findings were correct (no false positives).
+**Verification:** TERRA XHigh did miss the MSR PL2 encoding bug (H1), which Sol's revised
+methodology classifies as Critical. It uniquely caught the turbo/max-performance issue (L5) and
+correctly identified `CAP_SYS_RAWIO` (H2). All its findings were correct (no false positives).
 
-**Resolved conclusion:** Both positions have merit. A combined ranking of **3rd** is defensible
-because zero false positives and unique findings are valuable, but the miss of H1 (MSR encoding)
-prevents it from ranking higher.
+**Resolved conclusion:** The revised Sol ranking (7th) is more defensible than the original (3rd).
+Missing the Critical PL2 encoding defect is a major completeness failure. A combined ranking of
+**7th** is most defensible.
 
-#### D5: 5.5 High ranking — 9th (GLM) vs 8th (Sol)
+#### D5: LUNA Max vs SOL High — 1st place disagreement
+
+| | GLM position | Sol position (revised) |
+|---|---|---|
+| **Rank** | SOL High 1st, LUNA Max 2nd | LUNA Max 1st, SOL High 2nd |
+| **Reasoning** | SOL High caught CAP_SYS_RAWIO (missed by LUNA Max); best accuracy and deployment awareness | LUNA Max has highest severity-weighted coverage (81.3% vs 72.0%); only report to find the Critical dependency API break; deepest transaction analysis |
+
+**Verification:** Both reports are excellent. SOL High caught `CAP_SYS_RAWIO` (H2) which LUNA Max
+missed. LUNA Max found the `honor-tools` dependency mismatch (Critical in Sol's canonical set)
+which SOL High missed. Sol's revised methodology weights the Critical dependency finding heavily,
+giving LUNA Max the edge.
+
+**Resolved conclusion:** This disagreement is **not fully resolved**. Both positions are defensible.
+SOL High is more accurate (9.7 vs 9.0 in Sol's scorecard); LUNA Max has broader severity-weighted
+coverage (81.3% vs 72.0%). The combined ranking places LUNA Max 1st because the Critical
+dependency finding is uniquely valuable, but SOL High remains the best choice for deployment-focused
+reviews. See Section 11 for per-workload recommendations.
+
+#### D6: 5.5 High ranking — 9th (GLM) vs 8th (Sol)
 
 Both agree 5.5 High is weak. GLM considers it the absolute weakest (understated severity, missed
-most issues). Sol considers GLM Max weaker due to false positives. This is a minor disagreement
-that depends on whether false positives or missed issues are considered more harmful.
+most issues). Sol considers GLM Max weaker due to false positives. The severity understatement is
+a significant concern.
 
-**Resolved conclusion:** 5.5 High is **9th** in the combined ranking because severity
-understatement is a particularly dangerous failure mode for a code-review report.
+**Resolved conclusion:** 5.5 High is **8th** in the combined ranking. GLM Max's incorrect findings
+push it to 9th.
 
-#### D6: GLM Max PP-005 — ProtectKernelModules prevents loading msr module
+#### D7: GLM Max PP-005 — ProtectKernelModules prevents loading msr module
 
 Both agree this is **partially correct**. The real blocker is `CAP_SYS_RAWIO` (which GLM Max
 missed). `ProtectKernelModules` is a secondary concern that only matters if `msr` is not
 pre-loaded.
 
-#### D7: GLM Max PP-007 — time.sleep in rewrite_epp blocks worker
+#### D8: GLM Max PP-007 — time.sleep in rewrite_epp blocks worker
 
 GLM frames this as an architecture bug; Sol frames it as a timeout budgeting issue. The
 underlying concern (cumulative retry duration exceeding queue timeout) is valid, but Sol's
-framing is more precise.
+framing is more precise. Sol classifies this as "Low-value / non-issue" because the queue is
+explicitly a blocking-I/O worker.
 
-#### D8: GLM Max PP-010 — _delayed_power_rewrite not coordinated with mutation lock
+#### D9: GLM Max PP-010 — _delayed_power_rewrite not coordinated with mutation lock
 
 Sol correctly identifies this as **duplicative** of PP-002 (stale task race). GLM Max split one
 concurrency issue into two findings.
@@ -443,55 +502,67 @@ concurrency issue into two findings.
 
 ## 10. Model Strengths and Weaknesses
 
-### SOL High (GPT-5.6-Sol, high effort) — Rank: 1
+### LUNA Max (GPT-5.6-Luna, max effort) — Rank: 1
 
 **Strengths:**
-- Best overall accuracy (GLM: 9, Sol: 9.3)
+- Highest severity-weighted coverage (81.3%) and Critical/High coverage (83.3%)
+- Only report to discover the `honor-tools` API mismatch through runtime testing (Critical)
+- Uniquely caught the auto-switch retry loop (L4)
+- Most thorough test coverage analysis
+- Most detailed architectural recommendations
+- Identified the persistence ordering issue (PP-011)
+- Broadest validated review: 11 confirmed findings and 3 partially correct
+
+**Weaknesses:**
+- Missed `CAP_SYS_RAWIO` (H2) — the most important deployment blocker
+- Missed `ProtectSystem=strict` vs `systemctl mask` (H3 — though this finding is disputed)
+- Slightly overstated the dependency mismatch severity (Critical instead of Medium for a
+  dev-only issue, though Sol's revised methodology classifies it as Critical)
+- Highest token usage (14.2M)
+
+### SOL High (GPT-5.6-Sol, high effort) — Rank: 2
+
+**Strengths:**
+- Most accurate report (Sol: 9.7 accuracy score)
 - Uniquely caught `CAP_SYS_RAWIO` among high-effort reports
 - Most actionable fix recommendations with concrete code
 - Best severity prioritization
 - Most thorough documentation analysis
 - Correctly identified the command-queue timeout as a sandbox artifact
+- 11 confirmed findings, zero incorrect, zero low-value
 
 **Weaknesses:**
-- Missed `ProtectSystem=strict` vs `systemctl mask` (H3 — though this finding is disputed)
+- Missed the Critical `honor-tools` dependency API break
+- Missed the persistence/apply transaction flaw
 - Missed governor substitution (M1)
-- Missed honor-tools dependency mismatch (M8)
 - Most expensive report ($5.08)
 
-### LUNA Max (GPT-5.6-Luna, max effort) — Rank: 2
+### LUNA XHigh (GPT-5.6-Luna, xhigh effort) — Rank: 3
 
 **Strengths:**
-- Deepest investigation of any report
-- Uniquely discovered the honor-tools API mismatch through runtime testing
-- Uniquely caught the auto-switch retry loop (L4)
-- Most thorough test coverage analysis
-- Most detailed architectural recommendations
-- Identified the persistence ordering issue (PP-011)
+- Broad, mostly validated coverage across eleven substantive issue areas
+- 10 confirmed findings, 2 partial, zero incorrect
+- Correctly identified the sandbox timeout as environmental
 
 **Weaknesses:**
-- Missed `CAP_SYS_RAWIO` (H2)
-- Missed `ProtectSystem=strict` vs `systemctl mask` (H3)
-- Slightly overstated the dependency mismatch severity (Critical instead of Medium for a
-  dev-only issue)
-- Highest token usage (14.2M)
+- Missed `CAP_SYS_RAWIO` (H2), `ProtectSystem=strict` (H3), and honor-tools mismatch
+- Listed the sandbox timeout as a finding (though correctly marked as pre-existing)
+- Lower severity-weighted coverage than LUNA Max (62.2% vs 81.3%)
 
-### TERRA XHigh (GPT-5.6-Terra, xhigh effort) — Rank: 3
+### 5.5 XHigh (GPT-5.5, xhigh effort) — Rank: 4
 
 **Strengths:**
-- Zero false positives — every finding was correct
-- Best signal-to-noise ratio (Sol: 9.3)
-- Uniquely caught turbo/max-performance controls not being applied (L5)
-- Correctly identified `CAP_SYS_RAWIO` (H2)
-- Excellent severity discipline
+- Excellent core blocker coverage with 10 confirmed findings
+- Strong timeout/capability analysis
+- Identified the fd leak (M5) and capability probe insufficiency (M4)
 
 **Weaknesses:**
-- Missed the MSR PL2 encoding bug (H1) — one of the most important issues
-- Fewer total findings (7)
-- Missed daemon lifecycle restore (H5), startup timeout (H6), and several other issues
-- Missed `root_path` abstraction bypass (M3) and fd leak (M5)
+- Missed `CAP_SYS_RAWIO` (H2), `ProtectSystem=strict` (H3), honor-tools mismatch (M8), and
+  governor substitution (M1)
+- Overstated the command-queue timeout as a release blocker
+- Most expensive report ($5.23) per finding ($0.44/finding)
 
-### SOL Medium (GPT-5.6-Sol, medium effort) — Rank: 4
+### SOL Medium (GPT-5.6-Sol, medium effort) — Rank: 5
 
 **Strengths:**
 - Best value-for-money ($1.29)
@@ -506,52 +577,7 @@ concurrency issue into two findings.
 - Missed honor-tools dependency mismatch (M8)
 - Less depth due to lower reasoning effort
 
-### LUNA XHigh (GPT-5.6-Luna, xhigh effort) — Rank: 5
-
-**Strengths:**
-- Solid analysis with broad coverage
-- Correctly identified all major issues it covered
-- Good architectural recommendations
-- Correctly identified the sandbox timeout as environmental
-
-**Weaknesses:**
-- Missed `CAP_SYS_RAWIO` (H2), `ProtectSystem=strict` (H3), and honor-tools mismatch (M8)
-- Listed the sandbox timeout as a finding (though correctly marked as pre-existing)
-
-### 5.5 XHigh (GPT-5.5, xhigh effort) — Rank: 6
-
-**Strengths:**
-- Good coverage of most major issues
-- Strong timeout/capability analysis
-- Identified the fd leak (M5) and capability probe insufficiency (M4)
-
-**Weaknesses:**
-- Missed `CAP_SYS_RAWIO` (H2), `ProtectSystem=strict` (H3), honor-tools mismatch (M8), and
-  governor substitution (M1)
-- Overstated the command-queue timeout as a release blocker
-- Most expensive report ($5.23) per finding ($0.44/finding)
-
-### GLM Max (GLM-5.2, max effort) — Rank: 7
-
-**Strengths:**
-- Most unique findings of any report
-- Only report to catch `time.sleep` blocking (L2) — though Sol disputes its framing
-- Most thorough MSR encoding analysis, including PL2 clamp bit inconsistency
-- Provided concrete test reproduction of the stale-task race
-- Best PPD D-Bus reactivation analysis (as context, though the conclusion was incorrect)
-- Best value at $1.79 per finding ($0.11/finding)
-
-**Weaknesses:**
-- **Two incorrect High-severity findings** (PP-003 ProtectSystem, PP-004 D-Bus reactivation) —
-  verified to be wrong
-- Missed `CAP_SYS_RAWIO` (H2) — the most important deployment blocker
-- Missed honor-tools dependency mismatch (M8)
-- Missed governor substitution (M1)
-- Split one concurrency issue into two duplicate findings (PP-002 and PP-010)
-- Disproportionate attention to cosmetic issues (PP-013, PP-014, PP-015)
-- Its incorrect findings could lead maintainers to weaken systemd hardening
-
-### LUNA High (GPT-5.6-Luna, high effort) — Rank: 8
+### LUNA High (GPT-5.6-Luna, high effort) — Rank: 6
 
 **Strengths:**
 - Least expensive report ($0.85)
@@ -565,7 +591,22 @@ concurrency issue into two findings.
 - Missed honor-tools dependency mismatch (M8)
 - Least complete coverage
 
-### 5.5 High (GPT-5.5, high effort) — Rank: 9
+### TERRA XHigh (GPT-5.6-Terra, xhigh effort) — Rank: 7
+
+**Strengths:**
+- Zero false positives — every finding was correct
+- Best signal-to-noise ratio (Sol: 9.3)
+- Uniquely caught turbo/max-performance controls not being applied (L5)
+- Correctly identified `CAP_SYS_RAWIO` (H2)
+
+**Weaknesses:**
+- **Missed the Critical PL2 encoding bug (H1)** — a major completeness failure
+- Fewer total findings (7)
+- Only 4 fully confirmed findings (Sol's revised assessment)
+- Missed daemon lifecycle restore (H5), startup timeout (H6), and several other issues
+- Missed `root_path` abstraction bypass (M3) and fd leak (M5)
+
+### 5.5 High (GPT-5.5, high effort) — Rank: 8
 
 **Strengths:**
 - Correctly identified the core code bugs (MSR encoding, delayed rewrite race, root_path bypass)
@@ -580,17 +621,38 @@ concurrency issue into two findings.
 - Overstated the command-queue timeout as a release blocker
 - Least depth and completeness
 
+### GLM Max (GLM-5.2, max effort) — Rank: 9
+
+**Strengths:**
+- Most unique findings of any report (16 total)
+- Only report to catch `time.sleep` blocking (L2) — though Sol disputes its framing
+- Most thorough MSR encoding analysis, including PL2 clamp bit inconsistency
+- Provided concrete test reproduction of the stale-task race
+- Best value at $1.79 per finding ($0.11/finding)
+
+**Weaknesses:**
+- **Two incorrect High-severity findings** (PP-003 ProtectSystem, PP-004 D-Bus reactivation) —
+  verified to be wrong
+- **Low validated finding density**: only 5 of 16 findings fully confirmed, 5 low-value or
+  duplicative
+- Lowest severity-weighted coverage (32.1%) and Critical/High coverage (30.6%)
+- Missed `CAP_SYS_RAWIO` (H2) — the most important deployment blocker
+- Missed honor-tools dependency mismatch (M8)
+- Missed governor substitution (M1)
+- Split one concurrency issue into two duplicate findings (PP-002 and PP-010)
+- Disproportionate attention to cosmetic issues (PP-013, PP-014, PP-015)
+- Its incorrect findings could lead maintainers to weaken systemd hardening
+
 ---
 
 ## 11. Recommended Model by Workload
 
 ### Complex repository-wide work
-**Recommended: SOL High or LUNA Max**
+**Recommended: LUNA Max + SOL High**
 
-SOL High provides the best overall accuracy and deployment awareness. LUNA Max provides the
-deepest investigation and uniquely discovers dependency/API issues through runtime testing. For
-complex work where missing a deployment blocker is costly, use SOL High. For work where
-dependency contracts and transaction boundaries matter, use LUNA Max.
+LUNA Max provides the deepest investigation and uniquely discovers dependency/API issues through
+runtime testing. SOL High provides the best accuracy and deployment awareness. For complex work
+where missing any issue is costly, use both together — their strengths are complementary.
 
 ### Long-context analysis
 **Recommended: LUNA Max**
@@ -610,7 +672,7 @@ prioritization was the best, making it easiest to translate findings into a reme
 **Recommended: SOL High**
 
 For code review specifically, SOL High is the best choice. It had the best combination of
-technical accuracy, deployment awareness, prioritization, and signal-to-noise. It correctly
+technical accuracy (9.7), deployment awareness, prioritization, and signal-to-noise. It correctly
 identified the `CAP_SYS_RAWIO` deployment blocker that 6 of 9 reports missed.
 
 ### Research requiring web access
@@ -636,13 +698,13 @@ issues is acceptable, LUNA High is adequate. For cost-sensitive work where criti
 be caught, SOL Medium is the minimum viable choice.
 
 ### Maximum-quality workloads
-**Recommended: SOL High ($5.08) + LUNA Max ($2.11)**
+**Recommended: LUNA Max ($2.11) + SOL High ($5.08)**
 
-For maximum quality, use both SOL High and LUNA Max. Their strengths are complementary: SOL High
-catches deployment blockers (CAP_SYS_RAWIO); LUNA Max catches dependency/API issues and
-transaction boundaries. Together they cost $7.19 and cover nearly all consolidated issues. This
-matches the Sol evaluator's final recommendation: "Use SOL High as the best primary review, merge
-in LUNA Max's dependency/transaction findings."
+For maximum quality, use both LUNA Max and SOL High. Their strengths are complementary: LUNA Max
+catches dependency/API issues and transaction boundaries; SOL High catches deployment blockers
+(CAP_SYS_RAWIO) and observed-state bugs. Together they cost $7.19 and cover nearly all
+consolidated issues. This matches the Sol evaluator's final recommendation: "Use SOL High as the
+best primary review, merge in LUNA Max's dependency/transaction findings."
 
 ### Best overall value
 **Recommended: SOL Medium ($1.29)**
@@ -660,15 +722,20 @@ starting point.
 
 | Rank | Report | GLM rank | Sol rank | Avg rank | Combined | Rationale |
 |------|--------|----------|----------|----------|----------|----------|
-| 1 | SOL High | 1 | 1 | 1.0 | **1** | Both agree; best overall |
-| 2 | LUNA Max | 2 | 2 | 2.0 | **2** | Both agree; deepest investigation |
-| 3 | TERRA XHigh | 6 | 3 | 4.5 | **3** | Zero false positives, unique findings |
-| 4 | SOL Medium | 4 | 4 | 4.0 | **4** | Both agree; best value |
-| 5 | LUNA XHigh | 5 | 5 | 5.0 | **5** | Both agree; solid coverage |
-| 6 | 5.5 XHigh | 7 | 6 | 6.5 | **6** | Good but missed blockers |
-| 7 | GLM Max | 3 | 9 | 6.0 | **7** | Verified incorrect findings lower it |
-| 8 | LUNA High | 8 | 7 | 7.5 | **8** | Missed most important issue |
-| 9 | 5.5 High | 9 | 8 | 8.5 | **9** | Understated severity |
+| 1 | LUNA Max | 2 | 1 | 1.5 | **1** | Highest severity-weighted coverage; only Critical dependency finding |
+| 2 | SOL High | 1 | 2 | 1.5 | **2** | Most accurate; best deployment awareness |
+| 3 | LUNA XHigh | 5 | 3 | 4.0 | **3** | Broad, mostly validated coverage |
+| 4 | 5.5 XHigh | 7 | 4 | 5.5 | **4** | Good core blocker coverage |
+| 5 | SOL Medium | 4 | 5 | 4.5 | **5** | Best value; disciplined |
+| 6 | LUNA High | 8 | 6 | 7.0 | **6** | Useful but misses key blockers |
+| 7 | TERRA XHigh | 6 | 7 | 6.5 | **7** | Misses Critical PL2 bug |
+| 8 | 5.5 High | 9 | 8 | 8.5 | **8** | Understates severity |
+| 9 | GLM Max | 3 | 9 | 6.0 | **9** | Verified incorrect findings; lowest validated density |
+
+> **Note on LUNA Max vs SOL High:** Both have an average rank of 1.5. LUNA Max is placed 1st
+> because Sol's revised methodology — which weights severity-weighted coverage at 60% — gives it
+> the edge for being the only report to find the Critical dependency API break. SOL High remains
+> the most accurate report and the best choice for deployment-focused reviews.
 
 ### Performance by reasoning effort
 
@@ -677,7 +744,7 @@ starting point.
 Key observations:
 - **Medium effort** (SOL Medium) achieved a score comparable to higher-effort reports at a
   fraction of the cost, suggesting diminishing returns from reasoning effort for this task.
-- **High effort** produced the widest spread (5.5 High at 6.4 vs SOL High at 9.0), suggesting
+- **High effort** produced the widest spread (5.5 High at 5.3 vs SOL High at 8.6), suggesting
   that model quality matters more than effort level.
 - **Max effort** (LUNA Max, GLM Max) produced the deepest investigations but also the most
   controversial findings (GLM Max's incorrect deployment claims).
@@ -689,8 +756,8 @@ Key observations:
 
 ### High confidence
 
-- **SOL High is the best overall report.** Both evaluators agree, and its findings are
-  well-supported by repository evidence.
+- **LUNA Max and SOL High are the top 2 reports.** Both evaluators place them in the top 2
+  (though they disagree on order). Their findings are well-supported by repository evidence.
 - **The overhaul is unsafe to merge or release.** All nine reports reached this conclusion
   (with 5.5 High understating it).
 - **GLM Max's PP-003 and PP-004 are incorrect.** Independently verified via `busctl
@@ -699,15 +766,17 @@ Key observations:
 - **The PPD ownership contradiction is real.** Confirmed by code tracing in 8 of 9 reports.
 - **The `CAP_SYS_RAWIO` deployment blocker is real.** Confirmed by kernel source and service
   unit inspection.
+- **The `honor-tools` dependency mismatch is real.** Confirmed by direct adapter probe returning
+  `unexpected keyword argument 'turbo_enabled'`.
 
 ### Medium confidence
 
-- **TERRA XHigh's rank (3rd combined).** Its zero false positives and unique turbo finding
-  support a high rank, but its miss of the MSR encoding bug (H1) is a significant gap. The
-  combined rank of 3rd-4th is defensible but not certain.
-- **GLM Max's combined rank (7th).** Its unique valid findings (L2, thorough MSR analysis)
-  argue against ranking it last, but its two incorrect High-severity findings argue against
-  ranking it highly. 7th is a judgment call.
+- **LUNA Max as #1 vs SOL High as #1.** The disagreement is not fully resolved. Sol's revised
+  methodology favors LUNA Max for its Critical dependency finding; GLM favors SOL High for its
+  accuracy and deployment awareness. Both positions are defensible.
+- **GLM Max's combined rank (9th).** Its unique valid findings (L2, thorough MSR analysis)
+  argue against ranking it last, but its two incorrect High-severity findings and lowest
+  severity-weighted coverage (32.1%) justify the bottom position.
 
 ### Low confidence / unresolved
 
@@ -726,13 +795,17 @@ Key observations:
 
 1. **No real hardware was available.** All claims about hardware behavior are inferred from
    code, kernel documentation, and arithmetic reproduction.
-2. **The two evaluators used different scoring scales** (integer vs. decimal 0-10). Direct
-   numerical comparison is approximate.
-3. **The issue coverage matrix is from the GLM report.** The Sol report's claim-by-claim
-   analysis is consistent but did not produce a separate matrix.
-4. **Pricing assumes standard API rates** with no batch/flex discounts.
-5. **The combined ranking involves judgment** where the two evaluators disagree. The
-   methodology prioritizes verified correctness over evaluator opinion.
+2. **The two evaluators used different scoring scales and methodologies.** GLM uses equal-weight
+   integer scoring; Sol uses severity-weighted decimal scoring. Direct numerical comparison is
+   approximate.
+3. **The Sol report was revised.** The revision changed rankings and introduced a new scoring
+   methodology. This summary reflects the revised version.
+4. **The issue coverage matrix is from the GLM report** (24 issues). The Sol report uses a
+   different canonical issue set (18 issues) for its severity-weighted coverage scoring.
+5. **Pricing assumes standard API rates** with no batch/flex discounts.
+6. **The combined ranking involves judgment** where the two evaluators disagree. The
+   methodology prioritizes verified correctness and severity-weighted coverage over evaluator
+   opinion.
 
 ---
 
@@ -743,22 +816,24 @@ Key observations:
 The power-profile overhaul is **unsafe to merge or release**. The five independently confirmed
 release blockers are:
 
-1. **PPD ownership contradiction (C1):** The service masks PPD at startup but the apply path
+1. **Honor-tools dependency mismatch (Critical in Sol's canonical set):** The adapter passes
+   fields unsupported by the allowed/resolved `honor-tools 0.1.0` constructor, causing every
+   profile apply to fail before reaching hardware.
+2. **PPD ownership contradiction (Critical):** The service masks PPD at startup but the apply path
    still requires `ppd_ok=True`, which depends on PPD being running.
-2. **MSR PL2 encoding bug (H1):** PL2 enable and time-window bits are shifted past bit 63 and
-   silently truncated.
-3. **Missing `CAP_SYS_RAWIO` (H2):** The shipped service unit lacks the capability required to
+3. **MSR PL2 encoding bug (Critical):** PL2 enable and time-window bits are shifted past bit 63
+   and silently truncated.
+4. **Missing `CAP_SYS_RAWIO` (High):** The shipped service unit lacks the capability required to
    open `/dev/cpu/0/msr`.
-4. **Delayed rewrite race + silent failures (H4):** Stale tasks can clobber newer profiles;
+5. **Delayed rewrite race + silent failures (High):** Stale tasks can clobber newer profiles;
    boolean failures are ignored; success is reported before enforcement completes.
-5. **Honor-tools dependency mismatch (M8):** The adapter passes fields unsupported by the
-   allowed/resolved `honor-tools 0.1.0` constructor.
 
 ### About the models
 
-1. **SOL High is the best code-review model** for this type of task. Its combination of accuracy,
-   deployment awareness, and fix quality is unmatched. Its main weakness (missing the
-   honor-tools dependency mismatch) is addressed by pairing with LUNA Max.
+1. **LUNA Max and SOL High are the best code-review models** for this type of task. LUNA Max has
+   the highest severity-weighted coverage and uniquely found the Critical dependency API break.
+   SOL High is the most accurate and caught the `CAP_SYS_RAWIO` deployment blocker. Their
+   strengths are complementary.
 
 2. **Model quality matters more than effort level.** SOL High (high effort, $5.08) outperformed
    5.5 XHigh (xhigh effort, $5.23) and GLM Max (max effort, $1.79). The model's training and
@@ -775,18 +850,25 @@ release blockers are:
    High) while identifying key issues that several higher-cost reports missed.
 
 5. **Two-evaluator methodology is valuable.** The two evaluators agreed on most findings but
-   disagreed significantly on GLM Max. Independent verification resolved the disagreement in
-   Sol's favor. A single evaluator would have either overrated GLM Max (GLM's view) or
-   undervalued its unique valid findings (Sol's view).
+   disagreed significantly on GLM Max and on the #1 ranking. Independent verification resolved
+   the GLM Max disagreement in Sol's favor. The #1 ranking disagreement (LUNA Max vs SOL High)
+   remains unresolved but reflects genuine trade-offs between coverage and accuracy.
+
+6. **Severity-weighted coverage matters.** Sol's revised methodology, which weights
+   severity-weighted finding coverage at 60% of the overall score, provides a more defensible
+   ranking than the original methodology that over-weighted prose quality and compactness. The
+   revision correctly downgraded TERRA XHigh (which missed the Critical PL2 bug) and elevated
+   LUNA Max (which uniquely found the Critical dependency break).
 
 ### Recommended remediation path
 
 Following the Sol evaluator's final recommendation:
 
-1. Use **SOL High** as the primary review
-2. Merge in **LUNA Max's** dependency/transaction findings
-3. Use **TERRA XHigh's** capability and turbo/max observations
-4. **Do not implement** GLM Max's `ProtectSystem`/D-Bus-activation remedies (they are based on
+1. Use **LUNA Max** as the primary review for dependency and transaction findings
+2. Add **SOL High's** deployment, EPP, and observed-state findings
+3. Incorporate **LUNA XHigh's and 5.5 XHigh's** lifecycle and I/O findings
+4. Use **TERRA XHigh's** capability and turbo/max observations
+5. **Do not implement** GLM Max's `ProtectSystem`/D-Bus-activation remedies (they are based on
    incorrect premises)
 
 The minimum credible release bar is:

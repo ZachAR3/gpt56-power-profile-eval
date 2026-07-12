@@ -14,7 +14,8 @@
       "GLM scorecard uses integer scores 0-10; Sol scorecard uses decimal scores 0-10.",
       "The two evaluators used the same 8 criteria but applied them independently with different standards.",
       "Issue coverage is from the GLM report's consolidated issue tracker (24 issues total: 1 Critical, 6 High, 8 Medium, 9 Low).",
-      "The Sol report did not produce an issue coverage matrix; its claim-by-claim analysis is consistent with GLM's matrix except where noted in the disagreements section."
+      "The Sol report was revised after initial publication. The revision introduced a severity-weighted coverage methodology (60% of overall score from finding coverage) and a canonical issue set of 18 issues (3 Critical, 7 High, 6 Medium, 2 Low). The Sol scorecard and rankings below reflect the revised version.",
+      "The Sol report's claim-by-claim analysis is consistent with GLM's issue matrix except where noted in the disagreements section."
     ]
   },
 
@@ -30,7 +31,7 @@
       "name": "GPT-5.6-Sol High",
       "report_file": "SOL_WEB_HIGH_MODELS_EVAL.md",
       "had_web_access": true,
-      "methodology": "Independent audit with web access. Verified claims against code, dependency behavior, kernel source, and systemd semantics. Ran 150 focused tests. Used decimal 0-10 scoring with explicit rubric (9-10 exceptional, 7-8 strong, 5-6 mixed, below 5 not dependable).",
+      "methodology": "Independent audit with web access. Verified claims against code, dependency behavior, kernel source, and systemd semantics. Ran 150 focused tests. Revised scoring methodology: 60% of overall score from severity-weighted finding coverage against a canonical 18-issue set (3 Critical, 7 High, 6 Medium, 2 Low), with factual accuracy and false-positive control as substantial counterweight. Decimal 0-10 scoring.",
       "score_scale": "decimal 0-10"
     }
   },
@@ -163,18 +164,18 @@
   },
 
   "scorecard_sol": {
-    "description": "Scores from SOL_WEB_HIGH_MODELS_EVAL.md. Decimal 0-10 scale. Rubric: 9-10 exceptional, 7-8 strong, 5-6 mixed, below 5 not dependable.",
+    "description": "Scores from revised SOL_WEB_HIGH_MODELS_EVAL.md. Decimal 0-10 scale. Revised methodology: 60% of overall score from severity-weighted finding coverage, 20% accuracy/false-positive control, 8% fix quality, 7% architectural understanding, 5% signal/clarity.",
     "criteria": ["Accuracy", "Depth", "Completeness", "Prioritization", "Fix quality", "Arch. understanding", "Signal-to-noise", "Overall usefulness"],
     "scores": {
-      "5_5_HIGH":    [8.0, 7.5, 7.0, 7.8, 7.8, 7.8, 8.0, 7.7],
-      "5_5_XHIGH":   [8.2, 8.7, 8.1, 8.3, 8.2, 8.5, 7.8, 8.2],
-      "GLM_MAX":     [5.7, 8.4, 7.8, 5.8, 6.0, 7.0, 4.8, 6.0],
-      "LUNA_HIGH":   [8.5, 7.6, 7.2, 8.3, 8.0, 8.0, 8.7, 8.0],
-      "LUNA_MAX":    [8.8, 9.2, 9.0, 8.4, 8.6, 9.0, 8.0, 8.8],
-      "LUNA_XHIGH":  [8.2, 8.3, 8.2, 8.1, 8.3, 8.4, 8.1, 8.2],
-      "SOL_HIGH":    [9.3, 9.0, 8.8, 9.2, 8.7, 9.0, 9.1, 9.0],
-      "SOL_MEDIUM":  [8.7, 7.7, 7.5, 8.7, 8.5, 8.2, 9.0, 8.2],
-      "TERRA_XHIGH": [9.0, 8.0, 7.7, 9.0, 8.6, 8.5, 9.3, 8.6]
+      "5_5_HIGH":    [8.0, 7.2, 5.9, 7.8, 7.8, 7.8, 8.0, 5.5],
+      "5_5_XHIGH":   [8.8, 8.8, 8.0, 8.4, 8.2, 8.5, 7.8, 7.0],
+      "GLM_MAX":     [4.5, 8.0, 5.0, 4.5, 6.0, 7.0, 4.8, 4.0],
+      "LUNA_HIGH":   [8.8, 7.8, 7.2, 8.3, 8.0, 8.0, 8.7, 6.4],
+      "LUNA_MAX":    [9.0, 9.5, 9.3, 8.8, 8.6, 9.0, 8.0, 8.4],
+      "LUNA_XHIGH":  [8.5, 8.8, 8.2, 8.5, 8.3, 8.4, 8.1, 7.1],
+      "SOL_HIGH":    [9.7, 9.1, 8.8, 9.2, 8.7, 9.0, 9.1, 8.1],
+      "SOL_MEDIUM":  [8.9, 8.0, 7.8, 8.6, 8.5, 8.2, 9.0, 6.8],
+      "TERRA_XHIGH": [8.2, 7.2, 6.8, 8.7, 8.6, 8.5, 9.3, 6.0]
     }
   },
 
@@ -192,13 +193,13 @@
       "9": "5_5_HIGH"
     },
     "sol": {
-      "1": "SOL_HIGH",
-      "2": "LUNA_MAX",
-      "3": "TERRA_XHIGH",
-      "4": "SOL_MEDIUM",
-      "5": "LUNA_XHIGH",
-      "6": "5_5_XHIGH",
-      "7": "LUNA_HIGH",
+      "1": "LUNA_MAX",
+      "2": "SOL_HIGH",
+      "3": "LUNA_XHIGH",
+      "4": "5_5_XHIGH",
+      "5": "SOL_MEDIUM",
+      "6": "LUNA_HIGH",
+      "7": "TERRA_XHIGH",
       "8": "5_5_HIGH",
       "9": "GLM_MAX"
     }
@@ -245,6 +246,57 @@
     }
   },
 
+  "severity_weighted_coverage": {
+    "description": "From the revised SOL_WEB_HIGH_MODELS_EVAL.md. Sol's canonical issue set contains 18 independently verified issue categories (3 Critical, 7 High, 6 Medium, 2 Low). Maximum coverage is 92 points. Scoring: Critical=10pts, High=6pts, Medium=3pts, Low=1pt. Full credit for complete correct finding; partial credit for directionally correct but incomplete/overstated; no credit for missed/incorrect/non-actionable.",
+    "canonical_issues": {
+      "critical": [
+        "Dependency API incompatibility (honor-tools 0.1.0 constructor rejects turbo_enabled/max_perf_pct)",
+        "PPD ownership/apply contradiction (startup masks PPD but apply requires ppd_ok=True)",
+        "PL2 MSR encoding defect (PL2 enable and time-window bits shifted past bit 63)"
+      ],
+      "high": [
+        "Missing CAP_SYS_RAWIO in service unit",
+        "Delayed false success (success before convergence, boolean failures ignored)",
+        "Persistent daemon masks (no restore on shutdown/uninstall)",
+        "Name-only reconciliation (compares PPD label, not hardware state)",
+        "Sticky applied-state overlay (_last_applied_power_profile overrides observations)",
+        "Destructive takeover with weak capability gating (DMI match alone triggers masks)",
+        "Persistence/apply transaction inconsistency (hardware success + config-write failure)"
+      ],
+      "medium": [
+        "Stale delayed tasks (not generation-safe, not fully cancelled)",
+        "EPP vacuous success/no readback (empty CPU set returns True)",
+        "Requested/effective governor mismatch (performance silently becomes powersave)",
+        "Turbo/max-performance contract mismatch (controls persisted but not applied)",
+        "Timeout/retry budgeting (4x5s daemon calls vs 10s queue timeout; EPP retries)",
+        "Privileged-I/O robustness and test-boundary bypass (root_path bypass, fd leak, short I/O)"
+      ],
+      "low": [
+        "Inaccurate compatibility documentation (README claims AMD sysfs-only EPP but gate rejects)",
+        "Missing focused production-path tests (no tests changed in overhaul range)"
+      ]
+    },
+    "coverage": {
+      "LUNA_MAX":    {"confirmed": 11, "partial": 3,  "incorrect": 0, "unverifiable": 0, "low_value_duplicate": 0, "severity_weighted_pct": 81.3, "critical_high_pct": 83.3},
+      "SOL_HIGH":   {"confirmed": 11, "partial": 0,  "incorrect": 0, "unverifiable": 0, "low_value_duplicate": 0, "severity_weighted_pct": 72.0, "critical_high_pct": 73.6},
+      "LUNA_XHIGH": {"confirmed": 10, "partial": 2,  "incorrect": 0, "unverifiable": 1, "low_value_duplicate": 0, "severity_weighted_pct": 62.2, "critical_high_pct": 61.1},
+      "5_5_XHIGH":  {"confirmed": 10, "partial": 1,  "incorrect": 0, "unverifiable": 1, "low_value_duplicate": 0, "severity_weighted_pct": 59.5, "critical_high_pct": 63.2},
+      "SOL_MEDIUM": {"confirmed": 7,  "partial": 2,  "incorrect": 0, "unverifiable": 0, "low_value_duplicate": 0, "severity_weighted_pct": 55.7, "critical_high_pct": 52.8},
+      "LUNA_HIGH":  {"confirmed": 6,  "partial": 2,  "incorrect": 0, "unverifiable": 0, "low_value_duplicate": 0, "severity_weighted_pct": 49.7, "critical_high_pct": 49.3},
+      "TERRA_XHIGH":{"confirmed": 4,  "partial": 3,  "incorrect": 0, "unverifiable": 0, "low_value_duplicate": 0, "severity_weighted_pct": 44.8, "critical_high_pct": 41.0},
+      "5_5_HIGH":   {"confirmed": 5,  "partial": 1,  "incorrect": 0, "unverifiable": 1, "low_value_duplicate": 0, "severity_weighted_pct": 38.6, "critical_high_pct": 40.3},
+      "GLM_MAX":    {"confirmed": 5,  "partial": 4,  "incorrect": 2, "unverifiable": 0, "low_value_duplicate": 5, "severity_weighted_pct": 32.1, "critical_high_pct": 30.6}
+    },
+    "scoring_weights": {
+      "severity_weighted_coverage": 45,
+      "critical_high_coverage": 15,
+      "factual_accuracy_false_positive_control": 20,
+      "fix_quality": 8,
+      "architectural_understanding": 7,
+      "signal_and_clarity": 5
+    }
+  },
+
   "disagreements": [
     {
       "id": "D1",
@@ -268,18 +320,18 @@
       "id": "D3",
       "topic": "GLM_MAX overall ranking: 3rd vs 9th",
       "glm_position": "Ranked 3rd. Most unique findings, best value at $1.79, thorough MSR analysis, concrete test reproductions.",
-      "sol_position": "Ranked 9th (weakest). Two incorrect High-severity deployment findings (PP-003, PP-004) could lead maintainers to weaken systemd hardening. Duplicated concurrency finding (PP-010 = PP-002). Disproportionate attention to cosmetic issues (PP-013, PP-014, PP-015).",
+      "sol_position": "Ranked 9th (weakest). High apparent finding count but low validated density: only 5 of 16 findings fully confirmed, 2 materially incorrect, 5 low-value or duplicative. Incorrect ProtectSystem and masked-unit reactivation claims could cause maintainers to weaken hardening.",
       "verification": "The two disputed findings (PP-003, PP-004) are verified to be incorrect (see D1, D2). GLM_MAX did have unique valid findings (time.sleep blocking, D-Bus reactivation analysis as context). However, the incorrect High-severity findings are a significant reliability concern.",
-      "combined_conclusion": "Sol's ranking (9th) is more defensible than GLM's (3rd). Two incorrect High-severity findings that could lead to harmful remediation actions is a serious reliability problem. However, GLM_MAX's unique valid findings (L2 time.sleep, thorough MSR analysis) should not be dismissed. A combined ranking places GLM_MAX in the lower-middle tier (6th-7th), not 3rd or 9th.",
+      "combined_conclusion": "Sol's ranking (9th) is more defensible than GLM's (3rd). Two incorrect High-severity findings that could lead to harmful remediation actions is a serious reliability problem. However, GLM_MAX's unique valid findings (L2 time.sleep, thorough MSR analysis) should not be dismissed. A combined ranking places GLM_MAX in the lower tier (7th-9th), not 3rd.",
       "resolved": true
     },
     {
       "id": "D4",
-      "topic": "TERRA_XHIGH ranking: 6th (GLM) vs 3rd (Sol)",
+      "topic": "TERRA_XHIGH ranking: 6th (GLM) vs 7th (Sol revised, was 3rd)",
       "glm_position": "Ranked 6th. Fewer total findings (5). Missed ProtectSystem, honor-tools mismatch, daemon lifecycle restore, startup timeout, and several other issues.",
-      "sol_position": "Ranked 3rd. Exceptionally concise and accurate. Best signal-to-noise (9.3). Caught both CAP_SYS_RAWIO and turbo/max contract. Excellent severity discipline.",
-      "verification": "TERRA_XHIGH did miss the MSR PL2 encoding bug (H1), which is one of the most important issues. However, it uniquely caught the turbo/max-performance issue (L5) and correctly identified CAP_SYS_RAWIO (H2). Its findings were all correct (no false positives), which Sol rewards heavily.",
-      "combined_conclusion": "Both positions have merit. TERRA_XHIGH has fewer findings but higher accuracy. GLM penalizes it for missing H1 (MSR encoding); Sol rewards it for zero false positives and unique findings. A combined ranking of 4th-5th is most defensible.",
+      "sol_position": "Ranked 7th (revised down from 3rd). Remains concise and generally accurate, and its CAP_SYS_RAWIO finding is valuable, but it has only 4 fully confirmed findings plus 3 partial findings and completely misses the Critical PL2 encoding defect. High signal-to-noise should not compensate for that level of missed severity.",
+      "verification": "TERRA_XHIGH did miss the MSR PL2 encoding bug (H1), which is one of the most important issues. It uniquely caught the turbo/max-performance issue (L5) and correctly identified CAP_SYS_RAWIO (H2). Its findings were all correct (no false positives).",
+      "combined_conclusion": "The revised Sol ranking (7th) is more defensible than the original (3rd). Missing the Critical PL2 encoding defect is a major completeness failure that should not be offset by conciseness. A combined ranking of 6th-7th is most defensible.",
       "resolved": true
     },
     {

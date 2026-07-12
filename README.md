@@ -7,27 +7,30 @@ access) — then audited all nine reports to reduce single-model bias.
 
 ## TL;DR
 
-| Rank | Report | Model | Effort | Cost | Avg score | Key strength |
-|------|--------|-------|--------|------|-----------|--------------|
-| 1 | **SOL High** | GPT-5.6-Sol | high | $5.08 | 9.0 | Best overall accuracy and deployment awareness |
-| 2 | **LUNA Max** | GPT-5.6-Luna | max | $2.11 | 8.4 | Deepest investigation, unique dependency discovery |
-| 3 | **TERRA XHigh** | GPT-5.6-Terra | xhigh | $3.04 | 8.3 | Zero false positives, unique turbo finding |
-| 4 | **SOL Medium** | GPT-5.6-Sol | medium | $1.29 | 8.1 | Best value, high signal-to-noise |
-| 5 | **LUNA XHigh** | GPT-5.6-Luna | xhigh | $1.39 | 8.1 | Solid, broad coverage |
-| 6 | **5.5 XHigh** | GPT-5.5 | xhigh | $5.23 | 7.6 | Good coverage, missed deployment blockers |
-| 7 | **GLM Max** | GLM-5.2 | max | $1.79 | 7.0 | Unique findings, but two incorrect High-severity claims |
-| 8 | **LUNA High** | GPT-5.6-Luna | high | $0.85 | 7.5 | Concise, missed PPD ownership contradiction |
-| 9 | **5.5 High** | GPT-5.5 | high | $2.51 | 6.4 | Understated severity, missed most issues |
+| Rank | Report | Model | Effort | Cost | GLM rank | Sol rank | Key strength |
+|------|--------|-------|--------|------|----------|----------|--------------|
+| 1 | **LUNA Max** | GPT-5.6-Luna | max | $2.11 | 2 | 1 | Highest severity-weighted coverage; only report to find the Critical dependency API break |
+| 2 | **SOL High** | GPT-5.6-Sol | high | $5.08 | 1 | 2 | Most accurate report; caught CAP_SYS_RAWIO and sticky applied-state overlay |
+| 3 | **LUNA XHigh** | GPT-5.6-Luna | xhigh | $1.39 | 5 | 3 | Broad, mostly validated coverage across eleven issue areas |
+| 4 | **5.5 XHigh** | GPT-5.5 | xhigh | $5.23 | 7 | 4 | Excellent core blocker coverage; ten confirmed findings |
+| 5 | **SOL Medium** | GPT-5.6-Sol | medium | $1.29 | 4 | 5 | Disciplined, practical, strong validated density; best value |
+| 6 | **LUNA High** | GPT-5.6-Luna | high | $0.85 | 8 | 6 | Useful and technically sound, but misses two key blockers |
+| 7 | **TERRA XHigh** | GPT-5.6-Terra | xhigh | $3.04 | 6 | 7 | Valuable CAP_SYS_RAWIO finding, but misses Critical PL2 bug |
+| 8 | **5.5 High** | GPT-5.5 | high | $2.51 | 9 | 8 | Correct on main source bugs but narrow and understates severity |
+| 9 | **GLM Max** | GLM-5.2 | max | $1.79 | 3 | 9 | High apparent volume but low validated density; two incorrect High-severity claims |
 
-**Both evaluators agree** on the top two (SOL High, LUNA Max) and on the overall
-verdict: the overhaul is **unsafe to merge or release**. The primary disagreement
-is about GLM Max (ranked 3rd by GLM, 9th by Sol). Independent verification confirms
-Sol is correct — GLM Max's claim that `ProtectSystem=strict` blocks `systemctl
-mask` is wrong, because `systemctl mask` is a D-Bus operation handled by PID 1.
+**The evaluators disagree on #1:** GLM ranks SOL High first; Sol's revised
+methodology ranks LUNA Max first, because LUNA Max was the only report to
+discover the Critical `honor-tools` dependency API incompatibility. Both agree
+the overhaul is **unsafe to merge or release**.
+
+**The primary disagreement** about GLM Max (ranked 3rd by GLM, 9th by Sol) was
+resolved by independent verification: `systemctl mask` is a D-Bus operation
+handled by PID 1, confirming Sol is correct that `ProtectSystem=strict` does not
+block it. GLM Max's PP-003 and PP-004 are incorrect.
 
 **Best value:** SOL Medium ($1.29) identified key issues that several higher-cost
-reports missed. **Best overall:** SOL High ($5.08) had the best accuracy and
-deployment awareness.
+reports missed.
 
 ## Key graphs
 
@@ -35,13 +38,13 @@ deployment awareness.
 
 ![Overall Scores](docs/assets/01_overall_scores.svg)
 
+### Severity-weighted finding coverage (Sol revised methodology)
+
+![Severity-Weighted Coverage](docs/assets/10_severity_weighted_coverage.svg)
+
 ### Cost vs. performance
 
 ![Cost vs Performance](docs/assets/04_cost_vs_performance.svg)
-
-### Issue coverage matrix
-
-![Issue Coverage](docs/assets/06_issue_coverage.svg)
 
 ### Ranking differences between evaluators
 
@@ -56,7 +59,7 @@ More graphs are in the [full report](MODELS_EVAL_SUMMARY.md) and the
 |------|-------------|
 | `MODELS_EVAL_SUMMARY.md` | **Combined report** reconciling both meta-evaluations |
 | `GLM_MODELS_EVAL.md` | Meta-evaluation by GLM-5.2 (no web access) |
-| `SOL_WEB_HIGH_MODELS_EVAL.md` | Meta-evaluation by GPT-5.6-Sol High (with web access) |
+| `SOL_WEB_HIGH_MODELS_EVAL.md` | Meta-evaluation by GPT-5.6-Sol High (with web access, revised) |
 | `5.5_HIGH_EVAL.md` | GPT-5.5 high-effort code review (7 findings) |
 | `5.5_XHIGH_EVAL.md` | GPT-5.5 xhigh-effort code review (12 findings) |
 | `GLM_MAX_EVAL.md` | GLM-5.2 max-effort code review (16 findings) |
@@ -67,8 +70,8 @@ More graphs are in the [full report](MODELS_EVAL_SUMMARY.md) and the
 | `SOL_MEDIUM_EVAL.md` | GPT-5.6-Sol medium-effort code review (9 findings) |
 | `TERRA_XHIGH_EVAL.md` | GPT-5.6-Terra xhigh-effort code review (7 findings) |
 | `generate_graphs.py` | Script that regenerates all graphs from `docs/evaluation/eval_data.json` |
-| `docs/evaluation/eval_data.json` | Normalized data (scores, costs, rankings, issue coverage) |
-| `docs/assets/` | SVG graphs |
+| `docs/evaluation/eval_data.json` | Normalized data (scores, costs, rankings, issue coverage, severity-weighted coverage) |
+| `docs/assets/` | SVG graphs (10 files) |
 | `honor-control.tar.gz` | Archived snapshot of the reviewed codebase (not committed; 279 MB) |
 
 ## Regenerating the graphs
@@ -90,6 +93,8 @@ the normalized data.
   GPT-5.6-Sol, GPT-5.6-Terra, GLM-5.2) at medium/high/xhigh/max effort levels.
 - **Meta-evaluators:** Two independent evaluations (GLM-5.2 without web access,
   GPT-5.6-Sol High with web access) scored all nine reports across 8 criteria.
+  Sol's revised methodology weights severity-weighted finding coverage at 60% of
+  the overall score.
 - **Cost data:** Extracted from Codex session logs and opencode database using
   official API pricing. Total evaluation cost: $23.29.
 - **No real hardware was touched** in any review. All findings are based on

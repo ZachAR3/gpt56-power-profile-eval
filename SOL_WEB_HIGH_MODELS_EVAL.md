@@ -11,11 +11,31 @@ The repository root also contained `LUNA_EVAL.md`, `SOL_EVAL.md`, and `TERRA_EVA
 
 ## Executive Summary
 
-**Strongest report: SOL High.** It had the best combination of technical accuracy, deployment awareness, prioritization, and signal-to-noise. In addition to the core PPD-ownership contradiction and PL2 packing bug, it correctly identified the shipped systemd unit's missing `CAP_SYS_RAWIO`, the false-positive EPP success path, the weak reconciliation model, the sticky “applied” overlay, timeout-budget mismatch, and lifecycle damage from persistent masks. It did not discover the resolved `honor-tools` constructor incompatibility, but it made no comparably serious false deployment claim.
+### Reassessment note
 
-**Close second: LUNA Max.** It was the only report to prove that the dependency version actually resolved in the checkout (`honor-tools 0.1.0`) rejects `turbo_enabled` and `max_perf_pct`, causing the production adapter to fail before any hardware operation. It also covered transaction boundaries, auto-switch retry behavior, capability weakness, lifecycle, reconciliation, and test isolation. It missed the deterministic `CAP_SYS_RAWIO` packaging failure and slightly over-prioritized the final-governor substitution and some retry behavior.
+The original scorecard **underweighted the number and severity of validated findings**. It gave too much influence to prose quality, compactness, and false-positive avoidance. Those qualities matter, but a code-review report that accurately finds eleven material defects is more useful than a concise report that accurately finds four while missing critical blockers.
 
-**Weakest report: GLM Max.** It found several real defects, especially the MSR packing error, stale delayed tasks, missing rollback, descriptor handling, and absent direct tests. However, two of its major High-severity deployment findings are wrong: `ProtectSystem=strict` does not itself prevent `systemctl mask`, and a successfully masked PPD unit is not reactivated by D-Bus. It also missed the actual service-capability failure (`CAP_SYS_RAWIO`) and the dependency API break, split one concurrency issue into duplicates, and devoted disproportionate attention to cosmetic imports/comments. Its length and confidence therefore overstate its reliability.
+This revision scores each report primarily against an independently derived canonical issue set: **3 Critical, 7 High, 6 Medium, and 2 Low findings**. Report-authored severity labels are not trusted; severity is assigned from the repository evidence. Sixty percent of the overall score now comes directly from severity-weighted finding coverage, with factual accuracy and false-positive control remaining a substantial counterweight.
+
+**Strongest report: LUNA Max.** It has the highest severity-weighted coverage and the broadest validated review: 11 confirmed findings and 3 partially correct findings. Most importantly, it alone found and safely reproduced the resolved `honor-tools` API incompatibility, a Critical production blocker that causes real profile application to fail before hardware mutation. It also identified the PPD/lifecycle contradiction, PL2 packing defect, delayed false-success semantics, reconciliation weakness, timeout mismatch, capability gap, persistence transaction problem, missing production tests, root-path bypass, and documentation mismatch. Its main omission is the packaged service's missing `CAP_SYS_RAWIO`.
+
+**Second: SOL High.** It is the most consistently accurate report: all 11 major findings are confirmed as substantive overall. It uniquely combines the real `CAP_SYS_RAWIO` deployment blocker with the sticky applied-state overlay, EPP false-success behavior, timeout mismatch, PPD ownership problem, MSR encoding bug, and lifecycle damage. It ranks below LUNA Max because it missed the Critical dependency API break and the persistence/apply transaction flaw.
+
+**Weakest report: GLM Max.** It contains several valid findings, but its apparent volume is misleading: only 5 of 16 formal findings are fully confirmed, 2 are materially incorrect, and 5 are low-value or duplicative. Its incorrect `ProtectSystem=strict` and masked-unit reactivation claims could cause maintainers to weaken hardening while failing to fix the actual deployment problem.
+
+### Corrected ranking
+
+1. **LUNA Max**
+2. **SOL High**
+3. **LUNA XHigh**
+4. **5.5 XHigh**
+5. **SOL Medium**
+6. **LUNA High**
+7. **TERRA XHigh**
+8. **5.5 High**
+9. **GLM Max**
+
+The largest correction is **TERRA XHigh**, previously ranked third. It remains concise and generally accurate, and its `CAP_SYS_RAWIO` finding is valuable, but it has only 4 fully confirmed findings plus 3 partial findings and completely misses the Critical PL2 encoding defect. Its high signal-to-noise should not compensate for that level of missed severity.
 
 ### Independently confirmed release blockers
 
@@ -27,7 +47,7 @@ The repository root also contained `LUNA_EVAL.md`, `SOL_EVAL.md`, and `TERRA_EVA
 
 ### Overall conclusion
 
-The branch is **unsafe to release**. The reports broadly agree on that conclusion, but their reasons are not equally reliable. The correct remediation is not to stack more delayed writes on top of PPD. The project needs one explicit power-policy owner, a versioned dependency/backend contract, a capability-accurate deployment model, and a verified convergence state rather than a name-only “applied” marker.
+The branch is **unsafe to release**. The best consolidated review starts with LUNA Max's dependency and transaction findings, adds SOL High's deployment, EPP, and observed-state findings, and then incorporates the additional validated lifecycle and I/O findings from LUNA XHigh and 5.5 XHigh.
 
 ## Scope, Method, and Evidence Standard
 
@@ -265,46 +285,84 @@ Awaiting convergence is better than returning false success, but simply extendin
 
 TERRA correctly frames this as a security decision, but a naive capability addition would expose every code path and imported dependency in the root D-Bus daemon to raw hardware I/O. Prefer a minimal helper with a tiny argument surface and strict validation, or eliminate the direct MSR path. If the capability is added, make it platform- and install-mode-specific, test under the real unit, and document lockdown/device requirements.
 
-## Comparative Scorecard
+## Severity-Weighted Coverage Reassessment
 
-Scores use the same standard for every report: 9-10 is exceptional and materially complete; 7-8 is strong but has important gaps; 5-6 is mixed and needs independent re-verification; below 5 is not dependable as a maintainer's action list.
+### Scoring method
+
+The canonical issue set contains **18 independently verified issue categories**:
+
+- **Critical (10 points each):** dependency API incompatibility; PPD ownership/apply contradiction; PL2 MSR encoding.
+- **High (6 points each):** missing `CAP_SYS_RAWIO`; delayed false success; persistent daemon masks; name-only reconciliation; sticky applied-state overlay; destructive takeover with weak capability gating; persistence/apply transaction inconsistency.
+- **Medium (3 points each):** stale delayed tasks; EPP vacuous success/no readback; requested/effective governor mismatch; turbo/max-performance contract mismatch; timeout/retry budgeting; privileged-I/O robustness and test-boundary bypass.
+- **Low (1 point each):** inaccurate compatibility documentation; missing focused production-path tests.
+
+Maximum coverage is **92 points**. A report receives full credit for a complete, correct finding; partial credit for directionally correct but incomplete or overstated coverage; and no credit for a missed, incorrect, or non-actionable claim. Incorrect high-severity claims are additionally reflected in the accuracy and signal scores.
+
+Overall usefulness is weighted as follows:
+
+- **45%** severity-weighted validated finding coverage
+- **15%** Critical/High issue coverage specifically
+- **20%** factual accuracy and false-positive control
+- **8%** fix quality
+- **7%** architectural understanding
+- **5%** signal and clarity
+
+Thus **60% of the final score is directly tied to the amount and severity of real findings**.
+
+### Validated finding coverage
+
+| Report | Confirmed | Partial | Incorrect | Unverifiable | Low-value / duplicate | Severity-weighted coverage | Critical/High coverage |
+|---|---:|---:|---:|---:|---:|---:|---:|
+| LUNA Max | 11 | 3 | 0 | 0 | 0 | **81.3%** | **83.3%** |
+| SOL High | 11 | 0 | 0 | 0 | 0 | **72.0%** | **73.6%** |
+| LUNA XHigh | 10 | 2 | 0 | 1 | 0 | **62.2%** | **61.1%** |
+| 5.5 XHigh | 10 | 1 | 0 | 1 | 0 | **59.5%** | **63.2%** |
+| SOL Medium | 7 | 2 | 0 | 0 | 0 | **55.7%** | **52.8%** |
+| LUNA High | 6 | 2 | 0 | 0 | 0 | **49.7%** | **49.3%** |
+| TERRA XHigh | 4 | 3 | 0 | 0 | 0 | **44.8%** | **41.0%** |
+| 5.5 High | 5 | 1 | 0 | 1 | 0 | **38.6%** | **40.3%** |
+| GLM Max | 5 | 4 | 2 | 0 | 5 | **32.1%** before false-positive penalty | **30.6%** |
+
+Counts alone are not the score: for example, TERRA's `CAP_SYS_RAWIO` discovery is worth more than several low-level robustness observations. Conversely, missing the Critical PL2 bug substantially reduces its coverage despite excellent concision.
+
+## Comparative Scorecard
 
 | Report | Accuracy | Depth | Completeness | Prioritization | Fix quality | Architectural understanding | Signal-to-noise | Overall usefulness |
 |---|---:|---:|---:|---:|---:|---:|---:|---:|
-| SOL High | 9.3 | 9.0 | 8.8 | 9.2 | 8.7 | 9.0 | 9.1 | 9.0 |
-| LUNA Max | 8.8 | 9.2 | 9.0 | 8.4 | 8.6 | 9.0 | 8.0 | 8.8 |
-| TERRA XHigh | 9.0 | 8.0 | 7.7 | 9.0 | 8.6 | 8.5 | 9.3 | 8.6 |
-| SOL Medium | 8.7 | 7.7 | 7.5 | 8.7 | 8.5 | 8.2 | 9.0 | 8.2 |
-| LUNA XHigh | 8.2 | 8.3 | 8.2 | 8.1 | 8.3 | 8.4 | 8.1 | 8.2 |
-| 5.5 XHigh | 8.2 | 8.7 | 8.1 | 8.3 | 8.2 | 8.5 | 7.8 | 8.2 |
-| LUNA High | 8.5 | 7.6 | 7.2 | 8.3 | 8.0 | 8.0 | 8.7 | 8.0 |
-| 5.5 High | 8.0 | 7.5 | 7.0 | 7.8 | 7.8 | 7.8 | 8.0 | 7.7 |
-| GLM Max | 5.7 | 8.4 | 7.8 | 5.8 | 6.0 | 7.0 | 4.8 | 6.0 |
-
+| LUNA Max | 9.0 | 9.5 | 9.3 | 8.8 | 8.6 | 9.0 | 8.0 | **8.4** |
+| SOL High | 9.7 | 9.1 | 8.8 | 9.2 | 8.7 | 9.0 | 9.1 | **8.1** |
+| LUNA XHigh | 8.5 | 8.8 | 8.2 | 8.5 | 8.3 | 8.4 | 8.1 | **7.1** |
+| 5.5 XHigh | 8.8 | 8.8 | 8.0 | 8.4 | 8.2 | 8.5 | 7.8 | **7.0** |
+| SOL Medium | 8.9 | 8.0 | 7.8 | 8.6 | 8.5 | 8.2 | 9.0 | **6.8** |
+| LUNA High | 8.8 | 7.8 | 7.2 | 8.3 | 8.0 | 8.0 | 8.7 | **6.4** |
+| TERRA XHigh | 8.2 | 7.2 | 6.8 | 8.7 | 8.6 | 8.5 | 9.3 | **6.0** |
+| 5.5 High | 8.0 | 7.2 | 5.9 | 7.8 | 7.8 | 7.8 | 8.0 | **5.5** |
+| GLM Max | 4.5 | 8.0 | 5.0 | 4.5 | 6.0 | 7.0 | 4.8 | **4.0** |
 
 ### Score rationale
 
-- **SOL High:** best deployment/code balance; catches the actual capability boundary and avoids GLM's incorrect systemd theory. Main miss: dependency constructor incompatibility.
-- **LUNA Max:** deepest repository/dependency integration review and the only report to prove the active dependency break. Main miss: `CAP_SYS_RAWIO`; a few findings are somewhat over-prioritized.
-- **TERRA XHigh:** exceptionally concise and accurate, with the key capability and turbo/max contract findings. Less complete on lifecycle details, dependency API shape, EPP false success, and state overlay.
-- **SOL Medium:** high signal and sound fixes, especially around EPP verification and transaction state. It lacks the packaged-service capability and dependency discoveries.
-- **LUNA XHigh:** broad and architecturally aware; loses points for treating an environment-specific queue failure as a release concern and for some overstatement around governor/task outcomes.
-- **5.5 XHigh:** thorough and generally accurate, but similarly elevates the sandbox queue behavior and misses the two strongest dependency/deployment blockers.
-- **LUNA High:** concise, accurate core review with good lifecycle/state observations, but materially less complete.
-- **5.5 High:** identifies the central code bugs but omits several production blockers and gives too much weight to the local command-queue environment.
-- **GLM Max:** substantial effort and several valid findings, but major false positives in systemd behavior, duplicated concurrency findings, cosmetic noise, and missed deterministic blockers reduce trust.
+- **LUNA Max:** highest validated severity coverage and the only report to find the Critical resolved-dependency incompatibility. It also has the broadest transaction, capability, lifecycle, reconciliation, timeout, and testing coverage. Missing `CAP_SYS_RAWIO` prevents a larger lead.
+- **SOL High:** best factual reliability and deployment analysis. It catches the actual service capability failure and the sticky observed-state bug, but misses the Critical dependency break and persistence transaction issue.
+- **LUNA XHigh:** broad coverage across the PPD contradiction, persistent masks, PL2 encoding, delayed failure, timeout, capability, reconciliation, I/O safety, task lifecycle, and docs. The queue claim is unverified, and it misses dependency and service-capability blockers.
+- **5.5 XHigh:** slightly stronger than LUNA XHigh on Critical/High coverage, with 10 confirmed findings, but less complete overall and also elevates an environment-specific queue failure.
+- **SOL Medium:** fewer findings than the reports above, but nearly all are useful and correctly prioritized. It misses dependency compatibility, raw-I/O deployment, reconciliation, and sticky observed state.
+- **LUNA High:** finds several important issues, including PL2, false success, persistent masking, reconciliation, and I/O robustness, but misses the central PPD/apply contradiction and `CAP_SYS_RAWIO`.
+- **TERRA XHigh:** excellent concision and a valuable raw-I/O capability finding, but materially incomplete. Missing the PL2 bug alone is a major completeness failure; it also misses dependency compatibility, reconciliation, capability-gated takeover, timeout behavior, and I/O isolation.
+- **5.5 High:** correct on several central code defects but much narrower than the stronger reports and distracted by the unverified command-queue environment issue.
+- **GLM Max:** high apparent finding count, but low validated density. Two major deployment claims are wrong, several findings are duplicates or style notes, and its proposed fixes could weaken hardening without resolving the actual problem.
 
 ## Final Ranking
 
-1. **SOL High** — strongest overall accuracy, prioritization, and production deployment reasoning. It correctly found the missing raw-I/O capability, which directly invalidates the central MSR mechanism under the shipped unit.
-2. **LUNA Max** — strongest dependency and transaction analysis. Its proof that the currently resolved dependency rejects the adapter's constructor is uniquely valuable and release-blocking.
-3. **TERRA XHigh** — best signal-to-noise and excellent severity discipline; catches both the service capability and the unimplemented turbo/max contract, but is less complete.
-4. **SOL Medium** — technically disciplined and practical, with very few distractions; lacks the two most important dependency/deployment discoveries.
-5. **LUNA XHigh** — broad and useful, but includes one unverified runtime finding and modest overstatement.
-6. **5.5 XHigh** — similarly broad, with strong timeout/capability analysis; penalized for the queue claim and missed current dependency/service-capability defects.
-7. **LUNA High** — reliable core findings and good architecture awareness, but narrower coverage.
-8. **5.5 High** — correct on the main source bugs, yet incomplete on packaging, dependency, host lifecycle, and observed-state integrity.
-9. **GLM Max** — weakest because confident false deployment claims could lead maintainers to weaken systemd hardening and misunderstand masked-unit behavior.
+1. **LUNA Max** — strongest severity-weighted coverage and the only discovery of the Critical dependency API failure; also strongest transaction analysis.
+2. **SOL High** — most accurate report and strongest deployment/state verification, including the missing `CAP_SYS_RAWIO` and sticky applied-state overlay.
+3. **LUNA XHigh** — broad, mostly validated coverage across eleven substantive issue areas; slightly more complete overall than 5.5 XHigh.
+4. **5.5 XHigh** — excellent core blocker coverage and ten confirmed findings, but less total breadth and one unverified runtime claim.
+5. **SOL Medium** — disciplined and practical with strong validated density, though it misses multiple deployment and recovery issues.
+6. **LUNA High** — useful and technically sound, but misses two of the most important ownership/deployment blockers.
+7. **TERRA XHigh** — strong signal and good severity language, but too few findings and a major Critical miss to rank near the top.
+8. **5.5 High** — identifies the main source bugs but omits much of the production, lifecycle, and state model impact.
+9. **GLM Max** — weakest after accounting for false high-severity claims, duplication, and low-value noise rather than raw report length.
+
 
 ## Recommended Consolidated Action Plan
 
