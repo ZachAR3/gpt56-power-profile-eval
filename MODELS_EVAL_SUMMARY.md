@@ -287,6 +287,35 @@ findings and the revised methodology's penalty for low validated finding density
 | 5.5 High | 5 | 1 | 0 | 0 | **38.6%** | **40.3%** |
 | GLM Max | 5 | 4 | 2 | 5 | **32.1%** | **30.6%** |
 
+### Finding quality breakdown
+
+The graph below shows how each report's findings break down by quality classification.
+GLM Max's high raw finding count (16) is misleading: only 5 are fully confirmed, 2 are
+incorrect, and 5 are low-value or duplicative. LUNA Max and SOL High have the most
+confirmed findings (11 each) with zero incorrect.
+
+![Finding Quality](docs/assets/11_finding_quality.svg)
+
+### Evaluator fairness analysis
+
+The graph below shows where the two evaluators disagree. Positive values (orange) mean Sol
+scored higher than GLM; negative values (blue) mean GLM scored higher. The largest
+disagreement is GLM Max (Sol scored it 2.15 points lower on average), driven by the
+verified-incorrect deployment findings. Sol also scores 5.5 High higher than GLM does
+(+1.75), reflecting Sol's view that correct-but-incomplete is better than
+confidently-wrong.
+
+![Evaluator Fairness](docs/assets/12_evaluator_fairness.svg)
+
+### Accuracy vs. coverage trade-off
+
+This graph shows the trade-off between factual accuracy (Sol's revised score) and
+severity-weighted finding coverage. The ideal position is the upper-right corner (high
+accuracy, high coverage). SOL High is the most accurate report; LUNA Max has the highest
+coverage. GLM Max is in the lower-left (low accuracy, low coverage).
+
+![Accuracy vs Coverage](docs/assets/13_accuracy_vs_coverage.svg)
+
 ---
 
 ## 7. Per-Category Analysis
@@ -373,6 +402,15 @@ beyond the PPD ownership contradiction.
 - **Best overall value:** SOL Medium ($1.29) offers the best balance of cost, accuracy, and
   issue coverage. It identified the governor substitution and EPP empty CPU set issue that
   several higher-cost reports missed.
+
+### Cost vs. validated findings
+
+Raw finding counts can be misleading because they include incorrect and low-value findings.
+The graph below shows cost versus **validated findings** (confirmed + partial only), which is a
+fairer efficiency metric. GLM Max appears efficient on raw count ($0.11/finding) but drops
+significantly when only validated findings are counted.
+
+![Cost vs Validated](docs/assets/14_cost_vs_validated.svg)
 
 ---
 

@@ -42,16 +42,24 @@ reports missed.
 
 ![Severity-Weighted Coverage](docs/assets/10_severity_weighted_coverage.svg)
 
-### Cost vs. performance
+### Finding quality breakdown
 
-![Cost vs Performance](docs/assets/04_cost_vs_performance.svg)
+![Finding Quality](docs/assets/11_finding_quality.svg)
+
+### Evaluator fairness analysis
+
+![Evaluator Fairness](docs/assets/12_evaluator_fairness.svg)
+
+### Cost vs. validated findings
+
+![Cost vs Validated](docs/assets/14_cost_vs_validated.svg)
 
 ### Ranking differences between evaluators
 
 ![Ranking Comparison](docs/assets/05_ranking_comparison.svg)
 
 More graphs are in the [full report](MODELS_EVAL_SUMMARY.md) and the
-`docs/assets/` directory.
+`docs/assets/` directory (14 SVG files total).
 
 ## Repository contents
 
@@ -71,7 +79,7 @@ More graphs are in the [full report](MODELS_EVAL_SUMMARY.md) and the
 | `TERRA_XHIGH_EVAL.md` | GPT-5.6-Terra xhigh-effort code review (7 findings) |
 | `generate_graphs.py` | Script that regenerates all graphs from `docs/evaluation/eval_data.json` |
 | `docs/evaluation/eval_data.json` | Normalized data (scores, costs, rankings, issue coverage, severity-weighted coverage) |
-| `docs/assets/` | SVG graphs (10 files) |
+| `docs/assets/` | SVG graphs (14 files) |
 | `honor-control.tar.gz` | Archived snapshot of the reviewed codebase (not committed; 279 MB) |
 
 ## Regenerating the graphs
