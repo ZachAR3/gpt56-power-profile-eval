@@ -259,9 +259,34 @@ the sum of individual report costs is $23.29 (a minor rounding discrepancy).
 | 5.5 High | 5.0 | 5.5 | **5.3** |
 | GLM Max | 8.0 | 4.0 | **6.0** |
 
+> **Fairness note:** The "Average" column is a simple mean of the two evaluators'
+> scores. Because GLM and Sol used different scoring methodologies (GLM: equal-weight
+> integer scoring; Sol: severity-weighted decimal scoring with 60% from finding
+> coverage), this average is not a rigorous composite score. It is provided for
+> rough comparison only. The combined ranking in Section 12 is based on verified
+> correctness and severity-weighted coverage, not on this average.
+
 ### Full scorecard heatmap
 
 ![Scorecard Heatmap](docs/assets/02_scorecard_heatmap.svg)
+
+### Per-model radar charts
+
+The grid below shows a small radar chart for each model across all 8 performance
+measures (averaged from both evaluators). The shape of each radar reveals each
+model's profile — for example, SOL High's radar is strong on accuracy and
+signal-to-noise, while LUNA Max's is strong on depth and completeness.
+
+![Radar Grid](docs/assets/15_radar_grid.svg)
+
+### Top 4 models compared
+
+This overlay radar chart compares the top 4 models on all 8 measures. LUNA Max
+and SOL High have the largest overall areas, but with different shapes — SOL High
+is stronger on accuracy and signal-to-noise, while LUNA Max is stronger on depth
+and completeness.
+
+![Radar Comparison](docs/assets/16_radar_comparison.svg)
 
 ### Evaluator comparison
 
@@ -475,6 +500,16 @@ harmful remediation is a serious reliability concern.
 **Resolved conclusion:** Sol's ranking (9th) is more defensible than GLM's (3rd). The revised
 methodology's severity-weighted coverage analysis confirms GLM Max has only 32.1% coverage (lowest
 of all reports) and 2 incorrect findings. A combined ranking of **9th** is most defensible.
+
+> **Balance note:** GLM-5.2's own report marked PP-003 as "Confirmed" — it did not
+> catch its own error. This is not a case of one evaluator's opinion overriding
+> another's; the independent verification (Section 9, D1) confirmed that
+> `systemctl mask` is a D-Bus operation handled by PID 1, not a client-side file
+> operation. GLM Max's PP-003 and PP-004 are factually incorrect regardless of
+> which evaluator's methodology is used. However, GLM Max's valid unique findings
+> (time.sleep blocking, thorough MSR analysis) are real and should not be
+> dismissed — they are included in the issue coverage matrix as L2 and H1
+> respectively.
 
 #### D4: TERRA XHigh ranking — 6th (GLM) vs 7th (Sol revised, was 3rd)
 
@@ -770,10 +805,15 @@ starting point.
 | 8 | 5.5 High | 9 | 8 | 8.5 | **8** | Understates severity |
 | 9 | GLM Max | 3 | 9 | 6.0 | **9** | Verified incorrect findings; lowest validated density |
 
-> **Note on LUNA Max vs SOL High:** Both have an average rank of 1.5. LUNA Max is placed 1st
-> because Sol's revised methodology — which weights severity-weighted coverage at 60% — gives it
-> the edge for being the only report to find the Critical dependency API break. SOL High remains
-> the most accurate report and the best choice for deployment-focused reviews.
+> **Note on LUNA Max vs SOL High:** Both have an average rank of 1.5. LUNA Max is
+> placed 1st because Sol's revised methodology — which weights severity-weighted
+> coverage at 60% — gives it the edge for being the only report to find the Critical
+> dependency API break. SOL High remains the most accurate report and the best choice
+> for deployment-focused reviews. This tiebreaker adopts Sol's methodology over GLM's
+> because Sol's severity-weighted approach was independently verified as more
+> defensible (see Section 5). If GLM's equal-weight methodology were used instead,
+> SOL High would rank 1st. Both positions are defensible; neither should be treated
+> as definitive.
 
 ### Performance by reasoning effort
 

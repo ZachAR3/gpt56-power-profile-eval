@@ -100,6 +100,131 @@ def save(fig, name):
 
 
 # ---------------------------------------------------------------------------
+# Smart label placement for scatter plots — avoids overlaps and chart edges
+# ---------------------------------------------------------------------------
+def _place_labels(ax, points, labels, sublabels=None, fontsize=9):
+    """Place labels near scatter points without overlapping dots or each other.
+
+    Uses a greedy algorithm with large offsets and leader lines.
+    Points are processed top-to-bottom for better collision avoidance.
+    """
+    placed = []
+    xlim = ax.get_xlim()
+    ylim = ax.get_ylim()
+    x_range = xlim[1] - xlim[0]
+    y_range = ylim[1] - ylim[0]
+    fig_w = ax.get_figure().get_figwidth()
+    fig_h = ax.get_figure().get_figheight()
+    pts_per_x = fig_w * 72 / x_range * 0.80
+    pts_per_y = fig_h * 72 / y_range * 0.80
+    label_w_pts = 75
+    line_h_pts = 14
+    n_lines = 2 if sublabels else 1
+    h_pts = line_h_pts * n_lines
+
+    # Sort indices by y descending (top to bottom) for better collision avoidance
+    sorted_indices = sorted(range(len(points)), key=lambda i: -points[i][1])
+
+    # 12 candidate positions — below positions have larger offsets to separate from above labels
+    candidates = [
+        (18, 16, "left", "bottom"),
+        (18, -16, "left", "top"),
+        (-18, 16, "right", "bottom"),
+        (-18, -16, "right", "top"),
+        (22, 0, "left", "center"),
+        (-22, 0, "right", "center"),
+        (0, 26, "center", "bottom"),
+        (0, -26, "center", "top"),
+        (28, 20, "left", "bottom"),
+        (-28, 20, "right", "bottom"),
+        (28, -20, "left", "top"),
+        (-28, -20, "right", "top"),
+    ]
+
+    for idx in sorted_indices:
+        px, py = points[idx]
+        label = labels[idx]
+        sub = sublabels[idx] if sublabels else None
+        text = f"{label}\n{sub}" if sub else label
+        w_data = label_w_pts / pts_per_x
+        h_data = h_pts / pts_per_y
+
+        best_pos = None
+        best_score = -999
+
+        for dx_pts, dy_pts, ha, va in candidates:
+            dx = dx_pts / pts_per_x
+            dy = dy_pts / pts_per_y
+            lx = px + dx
+            ly = py + dy
+
+            # Check chart bounds
+            if ha == "left" and lx + w_data > xlim[1] - 0.05:
+                continue
+            if ha == "right" and lx - w_data < xlim[0] + 0.05:
+                continue
+            if va == "bottom" and ly + h_data > ylim[1] - 0.05:
+                continue
+            if va == "top" and ly - h_data < ylim[0] + 0.05:
+                continue
+
+            score = 0
+            # Penalize overlap with other placed labels (very strong penalty)
+            for plx, ply, pw, ph in placed:
+                if (
+                    abs(lx - plx) < (w_data + pw) / 2 + 0.15
+                    and abs(ly - ply) < (h_data + ph) / 2 + 0.15
+                ):
+                    score -= 100
+                else:
+                    score += 2
+
+            # Penalize overlap with any dot
+            for j, (ox, oy) in enumerate(points):
+                dot_r = 0.12
+                if ha == "left":
+                    x_hit = lx < ox + dot_r + 0.02 and lx + w_data > ox - dot_r
+                elif ha == "right":
+                    x_hit = lx > ox - dot_r - 0.02 and lx - w_data < ox + dot_r
+                else:
+                    x_hit = abs(lx - ox) < w_data / 2 + dot_r
+                if va == "bottom":
+                    y_hit = ly < oy + dot_r + 0.02 and ly + h_data > oy - dot_r
+                elif va == "top":
+                    y_hit = ly > oy - dot_r - 0.02 and ly - h_data < oy + dot_r
+                else:
+                    y_hit = abs(ly - oy) < h_data / 2 + dot_r
+                if x_hit and y_hit:
+                    score -= 10
+
+            # No position preference — let collision avoidance decide
+
+            if score > best_score:
+                best_score = score
+                best_pos = (lx, ly, ha, va, dx_pts, dy_pts)
+
+        if best_pos is None:
+            best_pos = (px + 0.2, py, "left", "center", 22, 0)
+
+        lx, ly, ha, va, dx_pts, dy_pts = best_pos
+        use_arrow = abs(dx_pts) > 20 or abs(dy_pts) > 20
+        ax.annotate(
+            text,
+            (px, py),
+            textcoords="offset points",
+            xytext=(dx_pts, dy_pts),
+            ha=ha,
+            va=va,
+            fontsize=fontsize,
+            fontweight="bold",
+            arrowprops=dict(arrowstyle="-", color="#999", lw=0.5)
+            if use_arrow
+            else None,
+        )
+        placed.append((lx, ly, w_data, h_data))
+
+
+# ---------------------------------------------------------------------------
 # 1. Overall usefulness scores — GLM vs Sol side by side
 # ---------------------------------------------------------------------------
 def graph_overall_scores(data):
@@ -340,7 +465,7 @@ def graph_cost_vs_performance(data):
         for rid in reports
     ]
 
-    fig, ax = plt.subplots(figsize=(11, 8))
+    fig, ax = plt.subplots(figsize=(12, 8))
     for i, r in enumerate(reports):
         ax.scatter(
             costs[i],
@@ -351,32 +476,11 @@ def graph_cost_vs_performance(data):
             linewidth=1.5,
             zorder=5,
         )
-        # Smart label placement
-        offset_y = 0.25 if i % 2 == 0 else -0.4
-        offset_x = 0.1
-        if r == "LUNA_MAX":
-            offset_x, offset_y = 0.15, 0.3
-        elif r == "SOL_HIGH":
-            offset_x, offset_y = -0.15, 0.3
-        elif r == "GLM_MAX":
-            offset_x, offset_y = 0.15, -0.5
-        elif r == "5_5_HIGH":
-            offset_x, offset_y = 0.15, -0.5
-        elif r == "TERRA_XHIGH":
-            offset_x, offset_y = 0.15, 0.3
-        elif r == "SOL_MEDIUM":
-            offset_x, offset_y = 0.15, -0.5
-        elif r == "LUNA_HIGH":
-            offset_x, offset_y = 0.15, 0.3
-        ax.annotate(
-            f"{REPORT_LABELS[r]}\n({findings[i]} findings)",
-            (costs[i], avg_scores[i]),
-            textcoords="offset points",
-            xytext=(12, offset_y * 15),
-            ha="left",
-            fontsize=9,
-            fontweight="bold",
-        )
+
+    points = list(zip(costs, avg_scores))
+    labels = [REPORT_LABELS[r] for r in reports]
+    sublabels = [f"({findings[i]} findings)" for i in range(len(reports))]
+    _place_labels(ax, points, labels, sublabels, fontsize=9)
 
     ax.axhline(
         y=7.0,
@@ -389,7 +493,7 @@ def graph_cost_vs_performance(data):
     ax.set_xlabel("Production cost (USD)")
     ax.set_ylabel("Average overall score (/10, mean of both evaluators)")
     ax.set_title("Cost vs. Performance (bubble size = findings count)")
-    ax.set_xlim(-0.2, 6.0)
+    ax.set_xlim(-0.3, 6.5)
     ax.set_ylim(4.5, 9.5)
     ax.legend(loc="lower right")
     ax.grid(True, alpha=0.2)
@@ -1022,7 +1126,7 @@ def graph_accuracy_vs_coverage(data):
         for rid in reports
     ]
 
-    fig, ax = plt.subplots(figsize=(11, 8))
+    fig, ax = plt.subplots(figsize=(12, 8))
     for i, r in enumerate(reports):
         ax.scatter(
             accuracy[i],
@@ -1033,27 +1137,10 @@ def graph_accuracy_vs_coverage(data):
             linewidth=1.5,
             zorder=5,
         )
-        offset_x, offset_y = 10, 8
-        if r == "GLM_MAX":
-            offset_x, offset_y = -15, -20
-        elif r == "SOL_HIGH":
-            offset_x, offset_y = 10, -18
-        elif r == "LUNA_MAX":
-            offset_x, offset_y = 10, 8
-        elif r == "TERRA_XHIGH":
-            offset_x, offset_y = 10, -18
-        elif r == "5_5_HIGH":
-            offset_x, offset_y = 10, 8
-        elif r == "SOL_MEDIUM":
-            offset_x, offset_y = 10, 8
-        ax.annotate(
-            REPORT_LABELS[r],
-            (accuracy[i], coverage[i]),
-            textcoords="offset points",
-            xytext=(offset_x, offset_y),
-            fontsize=10,
-            fontweight="bold",
-        )
+
+    points = list(zip(accuracy, coverage))
+    labels = [REPORT_LABELS[r] for r in reports]
+    _place_labels(ax, points, labels, fontsize=10)
 
     ax.set_xlabel("Accuracy score (Sol revised, /10)")
     ax.set_ylabel("Severity-weighted coverage (%)")
@@ -1062,25 +1149,25 @@ def graph_accuracy_vs_coverage(data):
     ax.set_ylim(25, 90)
     ax.grid(True, alpha=0.2)
 
-    # Add quadrant labels
+    # Add quadrant labels — placed in corners away from data
     ax.text(
-        9.5,
-        85,
+        9.8,
+        88,
         "Ideal\n(high accuracy,\nhigh coverage)",
         fontsize=8,
-        color="#666",
+        color="#999",
         style="italic",
-        ha="center",
+        ha="right",
         va="top",
     )
     ax.text(
-        5,
-        35,
+        4.5,
+        28,
         "Problem\n(low accuracy,\nlow coverage)",
         fontsize=8,
-        color="#666",
+        color="#999",
         style="italic",
-        ha="center",
+        ha="left",
         va="bottom",
     )
     save(fig, "13_accuracy_vs_coverage.svg")
@@ -1103,7 +1190,7 @@ def graph_cost_vs_validated(data):
     partial = [swc["coverage"][r]["partial"] for r in reports]
     incorrect = [swc["coverage"][r]["incorrect"] for r in reports]
 
-    fig, ax = plt.subplots(figsize=(11, 8))
+    fig, ax = plt.subplots(figsize=(13, 8))
     for i, r in enumerate(reports):
         # Use confirmed + partial as the "validated" count
         validated = confirmed[i] + partial[i]
@@ -1116,36 +1203,145 @@ def graph_cost_vs_validated(data):
             linewidth=1.5,
             zorder=5,
         )
-        offset_y = 0.3 if i % 2 == 0 else -0.5
-        ax.annotate(
-            f"{REPORT_LABELS[r]}\n({confirmed[i]} confirmed, {incorrect[i]} incorrect)",
-            (costs[i], validated),
-            textcoords="offset points",
-            xytext=(12, offset_y * 12),
-            ha="left",
-            fontsize=9,
-            fontweight="bold",
-        )
+
+    points = list(zip(costs, [confirmed[i] + partial[i] for i in range(len(reports))]))
+    labels = [REPORT_LABELS[r] for r in reports]
+    sublabels = [
+        f"{confirmed[i]} confirmed, {incorrect[i]} incorrect"
+        for i in range(len(reports))
+    ]
+    _place_labels(ax, points, labels, sublabels, fontsize=9)
 
     ax.set_xlabel("Production cost (USD)")
     ax.set_ylabel("Validated findings (confirmed + partial)")
     ax.set_title("Cost vs. Validated Findings (fairer efficiency metric)")
-    ax.set_xlim(-0.2, 6.0)
+    ax.set_xlim(-0.3, 7.0)
     ax.set_ylim(3, 16)
     ax.grid(True, alpha=0.2)
 
-    # Add a "value frontier" annotation
+    # Add a "value frontier" annotation — placed in a corner away from data
     ax.text(
-        1.3,
-        15,
+        0.3,
+        15.5,
         "Best validated\nfindings per dollar",
         fontsize=8,
-        color="#666",
+        color="#999",
         style="italic",
-        ha="center",
+        ha="left",
         va="top",
     )
     save(fig, "14_cost_vs_validated.svg")
+
+
+# ---------------------------------------------------------------------------
+# 15. Radar chart grid — one small radar per model, 8 criteria
+# ---------------------------------------------------------------------------
+def graph_radar_grid(data):
+    """3×3 grid of small radar charts, one per model.
+
+    Uses the average of both evaluators' scores for each criterion.
+    """
+    criteria = data["scorecard_glm"]["criteria"]
+    # Short labels for radar
+    short_criteria = [
+        "Accuracy",
+        "Depth",
+        "Complete-\nness",
+        "Priority",
+        "Fix\nQuality",
+        "Arch.\nUnderstanding",
+        "Signal-to-\nNoise",
+        "Overall\nUsefulness",
+    ]
+    reports = REPORT_ORDER
+    n = len(criteria)
+    angles = np.linspace(0, 2 * np.pi, n, endpoint=False).tolist()
+    angles += angles[:1]
+
+    fig, axes = plt.subplots(3, 3, figsize=(14, 14), subplot_kw=dict(polar=True))
+    fig.suptitle(
+        "Per-Model Radar Charts: 8 Performance Measures (avg of both evaluators)",
+        fontsize=15,
+        fontweight="bold",
+        y=0.98,
+    )
+
+    for idx, r in enumerate(reports):
+        ax = axes[idx // 3][idx % 3]
+        glm_scores = data["scorecard_glm"]["scores"][r]
+        sol_scores = data["scorecard_sol"]["scores"][r]
+        avg = [(g + s) / 2 for g, s in zip(glm_scores, sol_scores)]
+        vals = avg + avg[:1]
+
+        color = REPORT_COLORS[r]
+        ax.plot(angles, vals, linewidth=2, color=color)
+        ax.fill(angles, vals, alpha=0.15, color=color)
+
+        ax.set_xticks(angles[:-1])
+        ax.set_xticklabels(short_criteria, fontsize=7)
+        ax.set_yticks([2, 4, 6, 8, 10])
+        ax.set_yticklabels(["2", "4", "6", "8", "10"], fontsize=6)
+        ax.set_ylim(0, 10)
+
+        # Title with rank
+        rank = idx + 1
+        ax.set_title(
+            f"#{rank} {REPORT_LABELS[r]}",
+            fontsize=11,
+            fontweight="bold",
+            pad=15,
+            color=color,
+        )
+
+    fig.tight_layout(rect=(0, 0, 1, 0.96))
+    save(fig, "15_radar_grid.svg")
+
+
+# ---------------------------------------------------------------------------
+# 16. Comparison radar — top 4 models overlaid
+# ---------------------------------------------------------------------------
+def graph_radar_comparison(data):
+    """Radar chart comparing the top 4 models on all 8 criteria."""
+    criteria = data["scorecard_glm"]["criteria"]
+    short_criteria = [
+        "Accuracy",
+        "Depth",
+        "Complete-\nness",
+        "Priority",
+        "Fix\nQuality",
+        "Arch.\nUnderstanding",
+        "Signal-to-\nNoise",
+        "Overall\nUsefulness",
+    ]
+    top_reports = REPORT_ORDER[:4]  # Top 4 by combined ranking
+    n = len(criteria)
+    angles = np.linspace(0, 2 * np.pi, n, endpoint=False).tolist()
+    angles += angles[:1]
+
+    fig, ax = plt.subplots(figsize=(9, 9), subplot_kw=dict(polar=True))
+
+    for r in top_reports:
+        glm_scores = data["scorecard_glm"]["scores"][r]
+        sol_scores = data["scorecard_sol"]["scores"][r]
+        avg = [(g + s) / 2 for g, s in zip(glm_scores, sol_scores)]
+        vals = avg + avg[:1]
+        color = REPORT_COLORS[r]
+        ax.plot(angles, vals, linewidth=2.5, label=REPORT_LABELS[r], color=color)
+        ax.fill(angles, vals, alpha=0.08, color=color)
+
+    ax.set_xticks(angles[:-1])
+    ax.set_xticklabels(short_criteria, fontsize=10)
+    ax.set_yticks([2, 4, 6, 8, 10])
+    ax.set_yticklabels(["2", "4", "6", "8", "10"], fontsize=9)
+    ax.set_ylim(0, 10)
+    ax.set_title(
+        "Top 4 Models Compared: 8 Performance Measures\n(avg of both evaluators)",
+        fontsize=13,
+        fontweight="bold",
+        pad=25,
+    )
+    ax.legend(loc="upper right", bbox_to_anchor=(1.35, 1.10), fontsize=10)
+    save(fig, "16_radar_comparison.svg")
 
 
 if __name__ == "__main__":
@@ -1165,4 +1361,6 @@ if __name__ == "__main__":
     graph_evaluator_fairness(data)
     graph_accuracy_vs_coverage(data)
     graph_cost_vs_validated(data)
-    print("Done. 14 SVG files written to docs/assets/")
+    graph_radar_grid(data)
+    graph_radar_comparison(data)
+    print("Done. 16 SVG files written to docs/assets/")

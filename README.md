@@ -38,6 +38,14 @@ reports missed.
 
 ![Overall Scores](docs/assets/01_overall_scores.svg)
 
+### Per-model radar charts (8 performance measures, avg of both evaluators)
+
+![Radar Grid](docs/assets/15_radar_grid.svg)
+
+### Top 4 models compared
+
+![Radar Comparison](docs/assets/16_radar_comparison.svg)
+
 ### Severity-weighted finding coverage (Sol revised methodology)
 
 ![Severity-Weighted Coverage](docs/assets/10_severity_weighted_coverage.svg)
@@ -59,7 +67,7 @@ reports missed.
 ![Ranking Comparison](docs/assets/05_ranking_comparison.svg)
 
 More graphs are in the [full report](MODELS_EVAL_SUMMARY.md) and the
-`docs/assets/` directory (14 SVG files total).
+`docs/assets/` directory (16 SVG files total).
 
 ## Repository contents
 
@@ -79,7 +87,7 @@ More graphs are in the [full report](MODELS_EVAL_SUMMARY.md) and the
 | `TERRA_XHIGH_EVAL.md` | GPT-5.6-Terra xhigh-effort code review (7 findings) |
 | `generate_graphs.py` | Script that regenerates all graphs from `docs/evaluation/eval_data.json` |
 | `docs/evaluation/eval_data.json` | Normalized data (scores, costs, rankings, issue coverage, severity-weighted coverage) |
-| `docs/assets/` | SVG graphs (14 files) |
+| `docs/assets/` | SVG graphs (16 files) |
 | `honor-control.tar.gz` | Archived snapshot of the reviewed codebase (not committed; 279 MB) |
 
 ## Regenerating the graphs
